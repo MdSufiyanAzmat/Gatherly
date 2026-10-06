@@ -24,6 +24,9 @@ const Navbar = () => {
                         {user ? (
                             <>
                                 <Link to={user.role === 'admin' ? '/admin' : '/dashboard'} className="text-gray-200 hover:text-white transition">Dashboard</Link>
+                                <Link to="/events/new" className="text-gray-200 hover:text-white transition">Submit Event</Link>
+                                <Link to="/my-events" className="text-gray-200 hover:text-white transition">My Events</Link>
+                                {user.role === 'admin' && <Link to="/admin/pending-events" className="text-gray-200 hover:text-white transition">Pending Approvals</Link>}
                                 <button onClick={handleLogout} className="bg-gray-700 hover:bg-black text-white px-4 py-2 rounded-md transition">Logout</button>
                             </>
                         ) : (

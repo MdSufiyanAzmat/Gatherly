@@ -110,7 +110,8 @@ const seedDatabase = async () => {
         const eventsWithAdmin = events.map(e => ({
             ...e,
             availableSeats: e.totalSeats,
-            createdBy: adminUser._id
+            createdBy: adminUser._id,
+            status: 'approved'
         }));
 
         const createdEvents = await Event.insertMany(eventsWithAdmin);

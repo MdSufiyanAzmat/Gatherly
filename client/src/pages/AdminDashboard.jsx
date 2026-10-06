@@ -29,7 +29,7 @@ const AdminDashboard = () => {
                 api.get('/events'),
                 api.get('/bookings')
             ]);
-            setEvents(eventsRes.data);
+            setEvents(eventsRes.data.data.events);
             setBookings(bookingsRes.data);
         } catch (error) {
             console.error('Error fetching admin data', error);

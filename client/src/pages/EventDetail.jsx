@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../utils/axios';
 import { AuthContext } from '../context/AuthContext';
 import { FaCalendarAlt, FaMapMarkerAlt, FaChair, FaMoneyBillWave } from 'react-icons/fa';
+import EventStatusBadge from '../components/EventStatusBadge';
 
 const EventDetail = () => {
     const { id } = useParams();
@@ -20,7 +21,7 @@ const EventDetail = () => {
         const fetchEvent = async () => {
             try {
                 const { data } = await api.get(`/events/${id}`);
-                setEvent(data);
+                setEvent(data.data);
             } catch (err) {
                 setError('Failed to load event details.');
             } finally {
@@ -60,6 +61,7 @@ const EventDetail = () => {
     if (error && !event) return <div className="text-center py-20 text-xl text-red-500">{error || 'Event not found'}</div>;
 
     const isSoldOut = event.availableSeats <= 0;
+    const isCreator = user?._id === event.createdBy?._id;
 
     return (
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden mt-8">
@@ -77,8 +79,11 @@ const EventDetail = () => {
                         <div className="inline-block bg-gray-200 text-gray-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-3">
                             {event.category}
                         </div>
+                        {isCreator && event.status !== 'approved' && <div className="mb-3"><EventStatusBadge status={event.status} /></div>}
                         <h1 className="text-4xl font-extrabold text-gray-900 mb-4">{event.title}</h1>
                         <p className="text-gray-600 text-lg leading-relaxed mb-6">{event.description}</p>
+                        <p className="mb-4 text-sm font-semibold text-gray-700">Organized by {event.createdBy?.name || 'Eventora'}</p>
+                        {isCreator && event.status === 'rejected' && <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">Rejection reason: {event.rejectionReason}</p>}
                     </div>
 
                     <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 min-w-75 w-full md:w-auto shrink-0 shadow-sm">

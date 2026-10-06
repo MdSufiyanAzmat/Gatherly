@@ -1,6 +1,7 @@
 const User = require('../models/user')
 const OTP = require('../models/OTP')
-const {sendOtpEmail} = require('../utils/email')
+const {sendOtpEmail} = require('../services/emailService')
+const emailQueue = require('../queues/emailQueue')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -89,6 +90,11 @@ exports.verifyOtp = async (req, res) => {
     }
     const user = await User.findOneAndUpdate({email}, {isVerified: true})
     await OTP.deleteMany({email, action: 'account_verification'})
+
+    // The SMTP work occurs in the worker; this enqueue is deliberately not awaited.
+    emailQueue.add('welcome-email', {to: user.email, name: user.name})
+        .catch((error) => console.error('Unable to queue welcome email:', error));
+
     res.json({
         message: "Account verified successfully you can log in now.",
         _id: user._id,

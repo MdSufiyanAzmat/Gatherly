@@ -7,6 +7,7 @@ const mongoose = require('mongoose')
 const authRoutes = require('./routes/auth')
 const eventRoutes = require('./routes/event')
 const bookingRoutes = require('./routes/booking')
+const { notFound, errorHandler } = require('./middlewares/errorHandler')
 
 app.use(cors())
 app.use(express.json())
@@ -17,6 +18,9 @@ app.use('/api/events', eventRoutes)
 app.use('/api/event', eventRoutes) // Backward compatibility for existing clients
 app.use('/api/bookings', bookingRoutes)
 app.use('/api/booking', bookingRoutes) // Backward compatibility for existing clients
+
+app.use(notFound)
+app.use(errorHandler)
 
 mongoose.connect(process.env.MONGODB_URI)
 .then(()=>{
