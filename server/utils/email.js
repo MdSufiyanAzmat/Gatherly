@@ -16,7 +16,7 @@ const sendBookingEmail = async (userEmail, userName, eventTitle) => {
     try {
         // Configure email options
         const mailOptions = {
-            from: process.env.EMAIōL_USER,           // Sender email
+            from: process.env.EMAIL_USER,           // Sender email
             to: userEmail,                          // FIXED: Was 'email', now using 'userEmail'
             subject: `Booking Confirmed: ${eventTitle}`,  // Email subject
             html: `
