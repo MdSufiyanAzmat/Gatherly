@@ -12,6 +12,9 @@ import PaymentFailed from './pages/PaymentFailed';
 import CreateEventPage from './pages/CreateEventPage';
 import MyEventsPage from './pages/MyEventsPage';
 import AdminPendingEventsPage from './pages/AdminPendingEventsPage';
+import OwnerDashboardPage from './pages/OwnerDashboardPage';
+import MyBookingsPage from './pages/MyBookingsPage';
+import { AdminOnlyRoute, ProtectedRoute, UserOnlyRoute } from './components/RouteGuards';
 
 function App() {
     return (
@@ -21,14 +24,18 @@ function App() {
                 <main className="grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <Routes>
                         <Route path="/" element={<EventsListPage />} />
-                        <Route path="/events/new" element={<CreateEventPage />} />
-                        <Route path="/my-events" element={<MyEventsPage />} />
-                        <Route path="/admin/pending-events" element={<AdminPendingEventsPage />} />
+                        <Route path="/events/submit" element={<UserOnlyRoute><CreateEventPage /></UserOnlyRoute>} />
+                        <Route path="/events/new" element={<UserOnlyRoute><CreateEventPage /></UserOnlyRoute>} />
+                        <Route path="/events/mine" element={<UserOnlyRoute><MyEventsPage /></UserOnlyRoute>} />
+                        <Route path="/my-events" element={<UserOnlyRoute><MyEventsPage /></UserOnlyRoute>} />
+                        <Route path="/my-bookings" element={<ProtectedRoute><MyBookingsPage /></ProtectedRoute>} />
+                        <Route path="/admin/pending-events" element={<AdminOnlyRoute><AdminPendingEventsPage /></AdminOnlyRoute>} />
                         <Route path="/events/:id" element={<EventDetail />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
-                        <Route path="/dashboard" element={<UserDashboard />} />
-                        <Route path="/admin" element={<AdminDashboard />} />
+                        <Route path="/dashboard" element={<ProtectedRoute><OwnerDashboardPage /></ProtectedRoute>} />
+                        <Route path="/admin/dashboard" element={<AdminOnlyRoute><AdminDashboard /></AdminOnlyRoute>} />
+                        <Route path="/admin" element={<AdminOnlyRoute><AdminDashboard /></AdminOnlyRoute>} />
                         <Route path="/payment-success" element={<PaymentSuccess />} />
                         <Route path="/payment-failed" element={<PaymentFailed />} />
                         <Route path="*" element={<h1 className="text-3xl font-bold text-center mt-20">404 - Page Not Found</h1>} />

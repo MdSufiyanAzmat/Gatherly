@@ -15,6 +15,12 @@ const errorHandler = (err, req, res, next) => {
         statusCode = 400;
         message = Object.values(err.errors).map((item) => item.message).join(', ');
     }
+    if (err.name === 'MulterError') {
+        statusCode = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        message = err.code === 'LIMIT_FILE_SIZE'
+            ? 'Uploaded file must be 5 MB or smaller.'
+            : 'Only JPG, JPEG, PNG, and WEBP images are allowed.';
+    }
 
     res.status(statusCode).json({ success: false, data: null, message });
 };

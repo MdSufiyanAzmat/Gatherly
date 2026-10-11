@@ -1,176 +1,254 @@
+require('dotenv').config();
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
+
 const User = require('./models/user');
 const Event = require('./models/event');
 const Booking = require('./models/booking');
-dotenv.config();
 
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/gatherly';
 
-const users = [
-    { name: 'Admin User', email: 'admin@eventora.com', password: 'password123', role: 'admin' },
-    { name: 'Demo User', email: 'user@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Alice Smith', email: 'alice@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Bob Johnson', email: 'bob@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Charlie Dave', email: 'charlie@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Diana Prince', email: 'diana@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Ethan Hunt', email: 'ethan@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Fiona Gallagher', email: 'fiona@eventora.com', password: 'password123', role: 'user' },
-    { name: 'George Miller', email: 'george@eventora.com', password: 'password123', role: 'user' },
-    { name: 'Hannah Montana', email: 'hannah@eventora.com', password: 'password123', role: 'user' }
-];
-
-const events = [
-    {
-        title: 'React & Node.js Developer Retreat',
-        description: 'Join us for a 3-day deep dive into modern full-stack web development. Perfect for developers looking to take their skills to the next level.',
-        date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
-        location: 'Silicon Valley Innovation Center, CA',
-        category: 'Technology',
-        totalSeats: 200,
-        ticketPrice: 0,
-        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        title: 'Neon Nights EDM Festival',
-        description: 'Experience an unforgettable night of EDM, techno, and dazzling light shows with top DJs from around the globe.',
-        date: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000), // 20 days from now
-        location: 'Grand Arena, New York',
-        category: 'Music',
-        totalSeats: 500,
-        ticketPrice: 1500,
-        imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        title: 'Global Leaders Business Summit',
-        description: 'A premium gathering of CEOs, founders, and investors discussing the future of global commerce and AI integration.',
-        date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days from now
-        location: 'The Ritz-Carlton, London',
-        category: 'Business',
-        totalSeats: 150,
-        ticketPrice: 5000,
-        imageUrl: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        title: 'Modern Art Expo 2024',
-        description: 'Discover breathtaking contemporary and modern arts from underground and trending artists this season.',
-        date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-        location: 'Downtown Art Museum',
-        category: 'Art',
-        totalSeats: 300,
-        ticketPrice: 200,
-        imageUrl: 'https://images.unsplash.com/photo-1536924940846-227afb31e2a5?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        title: 'Startup Pitch & Pitch Competition',
-        description: 'Watch 25 startups pitch for 1 million dollars in seed funding. Great networking for entrepreneurs and angel investors.',
-        date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-        location: 'Convention Center, Miami',
-        category: 'Business',
-        totalSeats: 250,
-        ticketPrice: 100,
-        imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800'
-    },
-    {
-        title: 'Cloud Computing Architecture Seminar',
-        description: 'A purely technical breakdown of scalable cloud solutions, multi-region routing, and serverless compute processing.',
-        date: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000), // 12 days from now
-        location: 'Tech Hub, Seattle',
-        category: 'Technology',
-        totalSeats: 100,
-        ticketPrice: 600,
-        imageUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=800'
-    }
-];
-
-const seedDatabase = async () => {
+const seed = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
-        console.log('\n✅ MongoDB connection open...');
+        await mongoose.connect(MONGO_URI);
+        console.log('✅ Connected to MongoDB');
 
-        await User.deleteMany();
-        await Event.deleteMany();
-        await Booking.deleteMany();
-        console.log('🗑️  Cleared existing data.');
+        // ── Clear existing data ──────────────────────────────
+        await Promise.all([
+            User.deleteMany({}),
+            Event.deleteMany({}),
+            Booking.deleteMany({}),
+        ]);
+        console.log('🧹 Cleared existing users, events, and bookings');
 
-        // Hash user passwords
-        const salt = await bcrypt.genSalt(10);
-        const hashedUsers = users.map(u => ({
-            ...u,
-            password: bcrypt.hashSync(u.password, salt),
-            isVerified: true
-        }));
+        // ── Users ────────────────────────────────────────────
+        const passwordHash = await bcrypt.hash('password123', 10);
 
-        const createdUsers = await User.insertMany(hashedUsers);
-        const adminUser = createdUsers.find(u => u.role === 'admin');
-        const normalUsers = createdUsers.filter(u => u.role === 'user');
-        console.log(`👤 Created ${createdUsers.length} total dummy users.`);
+        const users = await User.insertMany([
+            {
+                name: 'Admin User',
+                email: 'admin@gatherly.com',
+                password: passwordHash,
+                role: 'admin',
+                isVerified: true,
+            },
+            {
+                name: 'Aarav Sharma',
+                email: 'aarav@gatherly.com',
+                password: passwordHash,
+                role: 'user',
+                isVerified: true,
+            },
+            {
+                name: 'Priya Verma',
+                email: 'priya@gatherly.com',
+                password: passwordHash,
+                role: 'user',
+                isVerified: true,
+            },
+            {
+                name: 'Rohan Mehta',
+                email: 'rohan@gatherly.com',
+                password: passwordHash,
+                role: 'user',
+                isVerified: false,
+            },
+        ]);
 
-        // Link events to admin
-        const eventsWithAdmin = events.map(e => ({
-            ...e,
-            availableSeats: e.totalSeats,
-            createdBy: adminUser._id,
-            status: 'approved'
-        }));
+        const [admin, aarav, priya, rohan] = users;
+        console.log(`👥 Seeded ${users.length} users`);
 
-        const createdEvents = await Event.insertMany(eventsWithAdmin);
-        console.log(`🎉 Created ${createdEvents.length} distinct events with Unsplash images.`);
+        // ── Events ───────────────────────────────────────────
+        const now = Date.now();
+        const day = 24 * 60 * 60 * 1000;
 
-        // Generate Bookings Data
-        const bookingsData = [];
+        const events = await Event.insertMany([
+            {
+                title: 'Tech Meetup 2026',
+                description:
+                    'A gathering of developers, designers, and founders sharing the latest in web and AI.',
+                date: new Date(now + 7 * day),
+                location: 'Bengaluru Convention Center',
+                category: 'Technology',
+                totalSeats: 200,
+                availableSeats: 200,
+                ticketPrice: 0,
+                createdBy: aarav._id,
+                status: 'approved',
+                reviewedBy: admin._id,
+                reviewedAt: new Date(),
+            },
+            {
+                title: 'Sunset Music Festival',
+                description:
+                    'An evening of live indie music, food trucks, and good vibes by the lake.',
+                date: new Date(now + 14 * day),
+                location: 'Powai Lake Grounds, Mumbai',
+                category: 'Music',
+                totalSeats: 500,
+                availableSeats: 480,
+                ticketPrice: 799,
+                paymentInfo: {
+                    phoneNumber: 'aarav@upi',
+                    notes: 'Pay via UPI and upload your screenshot after booking.',
+                },
+                createdBy: aarav._id,
+                status: 'approved',
+                reviewedBy: admin._id,
+                reviewedAt: new Date(),
+            },
+            {
+                title: 'Startup Pitch Night',
+                description:
+                    'Early-stage founders pitch to a panel of investors and mentors.',
+                date: new Date(now + 21 * day),
+                location: 'WeWork Galaxy, Bengaluru',
+                category: 'Business',
+                totalSeats: 100,
+                availableSeats: 95,
+                ticketPrice: 499,
+                paymentInfo: {
+                    phoneNumber: 'priya@upi',
+                    notes: 'Scan the QR code on the event page to pay.',
+                },
+                createdBy: priya._id,
+                status: 'approved',
+                reviewedBy: admin._id,
+                reviewedAt: new Date(),
+            },
+            {
+                title: 'Yoga & Wellness Retreat',
+                description:
+                    'A half-day retreat with guided yoga, meditation, and a healthy brunch.',
+                date: new Date(now + 30 * day),
+                location: 'Rishikesh Riverside Resort',
+                category: 'Wellness',
+                totalSeats: 50,
+                availableSeats: 50,
+                ticketPrice: 1200,
+                paymentInfo: {
+                    phoneNumber: 'priya@upi',
+                },
+                createdBy: priya._id,
+                status: 'pending',
+            },
+            {
+                title: 'Photography Walk',
+                description:
+                    'Explore the old city with your camera. All skill levels welcome.',
+                date: new Date(now + 10 * day),
+                location: 'Chandni Chowk, Delhi',
+                category: 'Art',
+                totalSeats: 30,
+                availableSeats: 30,
+                ticketPrice: 0,
+                createdBy: rohan._id,
+                status: 'pending',
+            },
+        ]);
 
-        for (const event of createdEvents) {
-            // Assign 3-6 random users to each event
-            const randomCount = Math.floor(Math.random() * 4) + 3;
-            // Shuffle and pick random users
-            const shuffledUsers = [...normalUsers].sort(() => 0.5 - Math.random());
-            const selectedUsers = shuffledUsers.slice(0, randomCount);
+        const [techMeetup, musicFest, pitchNight, yogaRetreat, photoWalk] = events;
+        console.log(`📅 Seeded ${events.length} events`);
 
-            for (const user of selectedUsers) {
-                // Randomize statuses
-                const statuses = ['pending', 'confirmed', 'cancelled'];
-                const status = statuses[Math.floor(Math.random() * statuses.length)];
+        // ── Bookings ─────────────────────────────────────────
+        // Free event → auto-confirmed
+        const bookings = await Booking.insertMany([
+            {
+                userId: priya._id,
+                eventId: techMeetup._id,
+                ownerId: techMeetup.createdBy,
+                amount: 0,
+                status: 'confirmed',
+                paymentStatus: 'not_paid',
+                isFreeEvent: true,
+            },
+            {
+                userId: rohan._id,
+                eventId: techMeetup._id,
+                ownerId: techMeetup.createdBy,
+                amount: 0,
+                status: 'confirmed',
+                paymentStatus: 'not_paid',
+                isFreeEvent: true,
+            },
+            // Paid event → pending screenshot review
+            {
+                userId: rohan._id,
+                eventId: musicFest._id,
+                ownerId: musicFest.createdBy,
+                amount: 799,
+                status: 'pending',
+                paymentStatus: 'paid',
+                paymentScreenshot: {
+                    url: '/uploads/bookings/sample-screenshot.jpg',
+                    filename: 'sample-screenshot.jpg',
+                },
+                isFreeEvent: false,
+            },
+            {
+                userId: aarav._id,
+                eventId: pitchNight._id,
+                ownerId: pitchNight.createdBy,
+                amount: 499,
+                status: 'confirmed',
+                paymentStatus: 'paid',
+                paymentScreenshot: {
+                    url: '/uploads/bookings/sample-screenshot-2.jpg',
+                    filename: 'sample-screenshot-2.jpg',
+                },
+                reviewedAt: new Date(),
+                ownerNote: 'Payment verified. See you there!',
+                isFreeEvent: false,
+            },
+            {
+                userId: rohan._id,
+                eventId: yogaRetreat._id,
+                ownerId: yogaRetreat.createdBy,
+                amount: 1200,
+                status: 'rejected',
+                paymentStatus: 'not_paid',
+                ownerNote: 'Screenshot was unclear. Please rebook and re-upload.',
+                reviewedAt: new Date(),
+                isFreeEvent: false,
+            },
+        ]);
 
-                let paymentStatus = 'not_paid';
-                if (status === 'confirmed' && event.ticketPrice > 0) {
-                    // Usually confirmed tickets are marked paid (90% of the time)
-                    paymentStatus = Math.random() > 0.1 ? 'paid' : 'not_paid';
-                } else if (event.ticketPrice === 0) {
-                    paymentStatus = 'paid';
-                }
-
-                bookingsData.push({
-                    userId: user._id,
-                    eventId: event._id,
-                    status: status,
-                    paymentStatus: paymentStatus,
-                    amount: event.ticketPrice
-                });
-
-                // Deduct available seats specifically for confirmed tickets!
-                if (status === 'confirmed') {
-                    event.availableSeats -= 1;
-                    await event.save();
-                }
+        // Keep event.availableSeats consistent for confirmed bookings
+        const confirmedCounts = {};
+        for (const b of bookings) {
+            if (b.status === 'confirmed') {
+                const key = String(b.eventId);
+                confirmedCounts[key] = (confirmedCounts[key] || 0) + 1;
             }
         }
 
-        await Booking.insertMany(bookingsData);
-        console.log(`🎫 Inserted ${bookingsData.length} randomized dummy bookings (confirmed, pending, cancelled, paid, not_paid).`);
+        for (const [eventId, count] of Object.entries(confirmedCounts)) {
+            await Event.findByIdAndUpdate(
+                eventId,
+                { $inc: { availableSeats: -count } },
+                { returnDocument: 'after' }
+            );
+        }
 
-        console.log('\n🚀 Database seeded successfully!');
-        console.log('-------------------------------------------');
-        console.log('Admin Email: admin@eventora.com');
-        console.log('User Email:  user@eventora.com');
-        console.log('Password for all users: password123');
-        console.log('-------------------------------------------\n');
+        console.log(`🎟️  Seeded ${bookings.length} bookings`);
 
-        process.exit();
-    } catch (error) {
-        console.error('❌ Error seeding data:', error);
+        // ── Summary ─────────────────────────────────────────
+        console.log('\n────────────── SEED SUMMARY ──────────────');
+        console.log('Login credentials (password for all): password123');
+        console.log('  Admin : admin@gatherly.com');
+        console.log('  User  : aarav@gatherly.com');
+        console.log('  User  : priya@gatherly.com');
+        console.log('  User  : rohan@gatherly.com  (unverified)');
+        console.log('──────────────────────────────────────────\n');
+
+        await mongoose.disconnect();
+        console.log('🔌 Disconnected from MongoDB');
+        process.exit(0);
+    } catch (err) {
+        console.error('❌ Seed failed:', err);
+        await mongoose.disconnect();
         process.exit(1);
     }
 };
 
-seedDatabase();
+seed();

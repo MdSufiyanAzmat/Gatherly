@@ -1,14 +1,34 @@
-const express = require('express')
-const router = express.Router()
-const {bookEvent, getAllBookings, getMyBooking, sendBookingOtp, confirmBooking, deleteBooking} = require('../controllers/bookingController')
-const {protect, admin} = require('../middlewares/protect')
+const express = require('express');
+const router = express.Router();
+const {
+    createFreeBooking,
+    initiatePaidBooking,
+    submitPaymentProof,
+    ownerConfirmBooking,
+    ownerRejectBooking,
+    cancelBooking,
+    getOwnedBookings,
+    getOwnedBookingSummary,
+    getAllBookings,
+    getMyBookings,
+    viewPaymentProof,
+} = require('../controllers/bookingController');
+const { protect, adminOnly, userOnly } = require('../middlewares/protect');
+const { assertBookingOwner } = require('../middlewares/bookingOwnership');
+const paymentUpload = require('../config/multerPayment');
 
-router.post('/', protect, bookEvent)
-router.get('/', protect, admin, getAllBookings)
-router.get('/my', protect, getMyBooking)
-router.post('/send-otp', protect, sendBookingOtp)
-router.post('/sendOtp', protect, sendBookingOtp) // Backward compatibility
-router.put('/:id/confirm', protect, admin, confirmBooking)
-router.delete('/:id', protect, deleteBooking)
+router.post('/free/:eventId', protect, userOnly, createFreeBooking);
+router.post('/paid/:eventId/initiate', protect, initiatePaidBooking);
+router.post('/:bookingId/proof', protect, paymentUpload.single('screenshot'), submitPaymentProof);
 
-module.exports = router
+router.get('/owned/summary', protect, getOwnedBookingSummary);
+router.get('/owned', protect, getOwnedBookings);
+router.get('/my', protect, getMyBookings);
+router.get('/', protect, adminOnly, getAllBookings);
+
+router.put('/:id/owner-confirm', protect, assertBookingOwner, ownerConfirmBooking);
+router.put('/:id/owner-reject', protect, assertBookingOwner, ownerRejectBooking);
+router.put('/:id/cancel', protect, cancelBooking);
+router.get('/:id/proof-view', protect, assertBookingOwner, viewPaymentProof);
+
+module.exports = router;

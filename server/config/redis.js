@@ -14,4 +14,11 @@ if (process.env.REDIS_PASSWORD) {
     connectionOptions.password = process.env.REDIS_PASSWORD;
 }
 
-module.exports = new Redis(connectionOptions);
+const connection = new Redis(connectionOptions);
+
+// Redis is optional for HTTP requests: queues reconnect in the background and
+// safeEnqueue makes notification failures non-blocking.
+connection.on('connect', () => console.log('Redis connected'));
+connection.on('error', (error) => console.error('Redis connection error:', error.message));
+
+module.exports = connection;

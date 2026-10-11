@@ -22,7 +22,7 @@ export const submitEvent = createAsyncThunk('events/submit', async (event, thunk
 );
 
 export const fetchMyEvents = createAsyncThunk('events/fetchMine', async (_, thunkApi) =>
-    request(thunkApi, async () => (await api.get('/events/mine/list')).data.data)
+    request(thunkApi, async () => (await api.get('/events/mine')).data.data)
 );
 
 export const fetchPendingEvents = createAsyncThunk('events/fetchPending', async (_, thunkApi) =>

@@ -29,7 +29,7 @@ const MyEventsPage = () => {
         <section className="mx-auto max-w-5xl">
             <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
                 <div><h1 className="text-3xl font-black">My event submissions</h1><p className="mt-1 text-gray-600">Track each event’s approval status.</p></div>
-                <Link to="/events/new" className="rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white">Submit an event</Link>
+                <Link to="/events/submit" className="rounded-lg bg-gray-900 px-4 py-2.5 font-bold text-white">Submit an event</Link>
             </div>
             {loading && <p>Loading your events…</p>}
             {error && <p className="rounded bg-red-50 p-4 text-red-700">{error}</p>}

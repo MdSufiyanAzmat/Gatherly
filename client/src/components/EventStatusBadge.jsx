@@ -8,7 +8,7 @@ const styles = {
 
 const EventStatusBadge = ({ status }) => (
     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${styles[status] || 'bg-gray-100 text-gray-800'}`}>
-        {status}
+        {status === 'pending' ? 'Pending Approval' : status}
     </span>
 );
 

@@ -25,7 +25,7 @@ const sendBookingEmail = async (userEmail, userName, eventTitle) => {
                 <p>Your booking for <strong>${eventTitle}</strong> has been confirmed.</p>
                 <p>We look forward to seeing you at the event!</p>
                 <br>
-                <p>Best regards,<br>Eventora Team</p>
+                <p>Best regards,<br>Gatherly Team</p>
             `  // FIXED: Proper HTML email template
         };
         
@@ -49,11 +49,11 @@ const sendOtpEmail = async (email, otp, type) => {
         // Determine email title based on type
         const title = type === 'account_verification' 
             ? 'Verify Your Account' 
-            : 'Eventora Booking Verification';
+            : 'Gatherly Booking Verification';
         
         // Determine email message based on type
         const msg = type === 'account_verification'
-            ? 'Please use the following OTP to verify your new Eventora account'
+            ? 'Please use the following OTP to verify your new Gatherly account'
             : 'Please use the following OTP to verify and confirm your event booking';
         
         // Configure email options
@@ -68,7 +68,7 @@ const sendOtpEmail = async (email, otp, type) => {
                 <p>This OTP is valid for 10 minutes.</p>
                 <br>
                 <p>If you didn't request this, please ignore this email.</p>
-                <p>Best regards,<br>Eventora Team</p>
+                <p>Best regards,<br>Gatherly Team</p>
             `  // FIXED: Proper HTML with OTP highlighted
         };
         

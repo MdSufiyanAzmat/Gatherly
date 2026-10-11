@@ -51,4 +51,9 @@ const adminOnly = (req, res, next) => {
     }
 }
 
-module.exports = {protect, optionalAuth, adminOnly, admin: adminOnly}
+const userOnly = (req, res, next) => {
+    if (req.user?.role === 'user') return next();
+    return res.status(403).json({ success: false, data: null, message: 'This action is available to user accounts only.' });
+}
+
+module.exports = {protect, optionalAuth, adminOnly, userOnly, admin: adminOnly}

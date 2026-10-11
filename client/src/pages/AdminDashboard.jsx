@@ -30,7 +30,7 @@ const AdminDashboard = () => {
                 api.get('/bookings')
             ]);
             setEvents(eventsRes.data.data.events);
-            setBookings(bookingsRes.data);
+            setBookings(bookingsRes.data.data || []);
         } catch (error) {
             console.error('Error fetching admin data', error);
         } finally {
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
     const handleCreateEvent = async (e) => {
         e.preventDefault();
         try {
-            await api.post('/events', formData);
+            await api.post('/admin/events', formData);
             setShowEventForm(false);
             setFormData({ title: '', description: '', date: '', location: '', category: '', totalSeats: '', ticketPrice: '', imageUrl: '' });
             fetchData();
@@ -61,9 +61,9 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleConfirmBooking = async (id, paymentStatus) => {
+    const handleConfirmBooking = async (id) => {
         try {
-            await api.put(`/bookings/${id}/confirm`, { paymentStatus });
+            await api.put(`/bookings/${id}/owner-confirm`);
             fetchData();
         } catch (error) {
             alert(error.response?.data?.message || 'Error confirming booking');
@@ -73,7 +73,9 @@ const AdminDashboard = () => {
     const handleCancelBooking = async (id) => {
         if (window.confirm('Cancel this user\'s booking request?')) {
             try {
-                await api.delete(`/bookings/${id}`);
+                const reason = window.prompt('Rejection/refund note for the buyer:');
+                if (!reason) return;
+                await api.put(`/bookings/${id}/owner-reject`, { reason });
                 fetchData();
             } catch (error) {
                 alert(error.response?.data?.message || 'Error cancelling booking');
@@ -217,7 +219,7 @@ const AdminDashboard = () => {
                                         {/* Action buttons for admin */}
                                         {booking.status === 'pending' && (
                                             <div className="flex flex-wrap gap-2 mt-2">
-                                                <button onClick={() => handleConfirmBooking(booking._id, 'paid')} className="flex-1 min-w-30 bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition">
+                                                <button onClick={() => handleConfirmBooking(booking._id)} className="flex-1 min-w-30 bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition">
                                                     ✓ Approve as Paid
                                                 </button>
                                                 <button onClick={() => handleConfirmBooking(booking._id, 'not_paid')} className="flex-1 min-w-30 bg-gray-50 text-gray-700 hover:bg-gray-800 hover:text-white border border-gray-200 text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition">

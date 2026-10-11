@@ -1,31 +1,40 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { submitEvent } from '../store/eventsSlice';
+import { DEFAULT_EVENT_IMAGE } from '../utils/assets';
+import SubmitEventForm from '../components/SubmitEventForm';
 
-const initialForm = { title: '', description: '', date: '', location: '', category: '', totalSeats: '', ticketPrice: '', imageUrl: '' };
+const initialForm = { title: '', description: '', date: '', location: '', category: '', totalSeats: '', ticketPrice: '0', registrationLink: '', phoneNumber: '', paymentNotes: '' };
 
 const CreateEventPage = () => {
     const { user } = useContext(AuthContext);
     const dispatch = useDispatch();
-    const navigate = useNavigate();
     const [form, setForm] = useState(initialForm);
+    const [image, setImage] = useState(null);
+    const [qrCode, setQrCode] = useState(null);
+    const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState('');
-    const [toast, setToast] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const imagePreview = useMemo(() => image ? URL.createObjectURL(image) : DEFAULT_EVENT_IMAGE, [image]);
+    const paid = Number(form.ticketPrice) > 0;
 
     if (!user) return <Navigate to="/login" replace />;
+    if (submitted) return <section className="mx-auto flex min-h-[70vh] max-w-xl flex-col items-center justify-center text-center"><div className="rounded-full bg-secondary/20 p-5 text-4xl">✓</div><h1 className="mt-6 text-3xl font-black">Sent for review</h1><p className="mt-3 text-gray-600">Your event will be published once an administrator approves it.</p><div className="mt-8 flex gap-3"><Link to="/" className="rounded-lg border px-4 py-2.5 font-bold">Back to home</Link><Link to="/events/mine" className="rounded-lg bg-primary px-4 py-2.5 font-bold text-white">View My Events</Link></div></section>;
 
+    const update = (field) => (event) => setForm({ ...form, [field]: event.target.value });
     const submit = async (event) => {
         event.preventDefault();
         setError('');
         setSubmitting(true);
         try {
-            await dispatch(submitEvent(form)).unwrap();
-            setForm(initialForm);
-            setToast('Event submitted! Awaiting admin approval.');
-            setTimeout(() => navigate('/my-events'), 1200);
+            const data = new FormData();
+            Object.entries(form).forEach(([key, value]) => data.append(key, value));
+            if (image) data.append('image', image);
+            if (qrCode) data.append('qrCode', qrCode);
+            await dispatch(submitEvent(data)).unwrap();
+            setSubmitted(true);
         } catch (message) {
             setError(message);
         } finally {
@@ -33,33 +42,11 @@ const CreateEventPage = () => {
         }
     };
 
-    return (
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-10">
-            <h1 className="text-3xl font-black text-gray-900">Submit an event</h1>
-            <p className="mt-2 text-gray-600">Your event will be visible after an administrator approves it.</p>
-            {toast && <div role="status" className="mt-6 rounded-lg bg-emerald-50 p-4 font-medium text-emerald-800">{toast}</div>}
-            {error && <div role="alert" className="mt-6 rounded-lg bg-red-50 p-4 font-medium text-red-700">{error}</div>}
-            <form onSubmit={submit} className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-                {[
-                    ['title', 'Event title', 'text'], ['category', 'Category', 'text'], ['date', 'Date', 'date'],
-                    ['location', 'Location', 'text'], ['totalSeats', 'Total seats', 'number'], ['ticketPrice', 'Ticket price', 'number'],
-                    ['imageUrl', 'Image URL', 'url'],
-                ].map(([name, label, type]) => (
-                    <label key={name} className={name === 'imageUrl' ? 'md:col-span-2' : ''}>
-                        <span className="mb-1 block text-sm font-semibold text-gray-700">{label}</span>
-                        <input required min={type === 'number' ? 0 : undefined} type={type} value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-gray-900" />
-                    </label>
-                ))}
-                <label className="md:col-span-2">
-                    <span className="mb-1 block text-sm font-semibold text-gray-700">Description</span>
-                    <textarea required rows="5" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2.5 outline-none focus:border-gray-900" />
-                </label>
-                <button disabled={submitting} className="md:col-span-2 rounded-lg bg-gray-900 px-5 py-3 font-bold text-white hover:bg-black disabled:opacity-60">
-                    {submitting ? 'Submitting…' : 'Submit for approval'}
-                </button>
-            </form>
-        </div>
-    );
+    return <div className="mx-auto max-w-3xl rounded-2xl border border-gray-100 bg-white p-6 shadow-soft sm:p-10">
+        <h1 className="font-heading text-3xl font-black">Submit an event</h1>
+        <p className="mt-2 text-gray-600">Your event will be visible after an administrator approves it.</p>
+        <SubmitEventForm form={form} image={image} imagePreview={imagePreview} paid={paid} submitting={submitting} error={error} onChange={update} onImageChange={(event) => setImage(event.target.files?.[0] || null)} onQrCodeChange={(event) => setQrCode(event.target.files?.[0] || null)} onSubmit={submit} />
+    </div>;
 };
 
 export default CreateEventPage;
