@@ -4,15 +4,17 @@ import { Link, Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import EventStatusBadge from '../components/EventStatusBadge';
 import { deleteEvent, fetchMyEvents } from '../store/eventsSlice';
+import Pagination from '../components/Pagination';
 
 const MyEventsPage = () => {
     const { user } = useContext(AuthContext);
     const dispatch = useDispatch();
-    const { myEvents, loading, error } = useSelector((state) => state.events);
+    const { myEvents, myPagination, loading, error } = useSelector((state) => state.events);
+    const [page, setPage] = React.useState(1);
 
     useEffect(() => {
-        if (user) dispatch(fetchMyEvents());
-    }, [dispatch, user]);
+        if (user) dispatch(fetchMyEvents({ page }));
+    }, [dispatch, user, page]);
 
     if (!user) return <Navigate to="/login" replace />;
 
@@ -50,6 +52,7 @@ const MyEventsPage = () => {
                     </article>
                 ))}
             </div>
+            <Pagination pagination={myPagination} onPageChange={setPage} />
         </section>
     );
 };

@@ -9,8 +9,8 @@ const request = async (thunkApi, callback) => {
     }
 };
 
-export const fetchMyBookings = createAsyncThunk('bookings/fetchMine', async (_, thunkApi) =>
-    request(thunkApi, async () => (await api.get('/bookings/my')).data.data)
+export const fetchMyBookings = createAsyncThunk('bookings/fetchMine', async (params = {}, thunkApi) =>
+    request(thunkApi, async () => (await api.get('/bookings/my', { params })).data.data)
 );
 
 export const fetchOwnedBookings = createAsyncThunk('bookings/fetchOwned', async (params, thunkApi) =>
@@ -42,7 +42,9 @@ const bookingsSlice = createSlice({
     name: 'bookings',
     initialState: {
         myBookings: [],
+        myPagination: null,
         ownedBookings: [],
+        ownedPagination: null,
         summary: null,
         loading: false,
         error: null,
@@ -50,8 +52,8 @@ const bookingsSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder
-            .addCase(fetchMyBookings.fulfilled, (state, action) => { state.loading = false; state.myBookings = action.payload; })
-            .addCase(fetchOwnedBookings.fulfilled, (state, action) => { state.loading = false; state.ownedBookings = action.payload; })
+            .addCase(fetchMyBookings.fulfilled, (state, action) => { state.loading = false; state.myBookings = action.payload.bookings; state.myPagination = action.payload.pagination; })
+            .addCase(fetchOwnedBookings.fulfilled, (state, action) => { state.loading = false; state.ownedBookings = action.payload.bookings; state.ownedPagination = action.payload.pagination; })
             .addCase(fetchOwnedSummary.fulfilled, (state, action) => { state.loading = false; state.summary = action.payload; })
             .addCase(cancelBooking.fulfilled, (state, action) => { state.loading = false; replaceBooking(state, action.payload); })
             .addCase(ownerConfirmBooking.fulfilled, (state, action) => { state.loading = false; replaceBooking(state, action.payload); })

@@ -5,16 +5,18 @@ import { fetchPublicEvents } from '../store/eventsSlice';
 import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
 import SubscribeSection from '../components/SubscribeSection';
 import Footer from '../components/Footer';
+import Pagination from '../components/Pagination';
 
 const EventsListPage = () => {
     const dispatch = useDispatch();
-    const { publicEvents: events, loading, error } = useSelector((state) => state.events);
+    const { publicEvents: events, pagination, loading, error } = useSelector((state) => state.events);
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
-        const timer = setTimeout(() => dispatch(fetchPublicEvents({ search })), 300);
+        const timer = setTimeout(() => dispatch(fetchPublicEvents({ search, page })), 300);
         return () => clearTimeout(timer);
-    }, [dispatch, search]);
+    }, [dispatch, search, page]);
 
     return (
         <section>
@@ -23,7 +25,7 @@ const EventsListPage = () => {
                 <h1 className="mt-2 font-heading text-4xl font-black">Discover events</h1>
                 <p className="mt-2 max-w-xl text-light/75">Find approved events from organizers in your community.</p>
                 <label className="sr-only" htmlFor="event-search">Search events</label>
-                <input id="event-search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by title, category, or location" className="mt-6 w-full max-w-xl rounded-xl border-2 border-transparent bg-white px-4 py-3 text-dark outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20 placeholder:text-muted" />
+                <input id="event-search" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} placeholder="Search by title, category, or location" className="mt-6 w-full max-w-xl rounded-xl border-2 border-transparent bg-white px-4 py-3 text-dark outline-none transition focus:border-secondary focus:ring-4 focus:ring-secondary/20 placeholder:text-muted" />
             </div>
             {loading && <p className="py-10 text-center">Loading events…</p>}
             {error && <p className="rounded-lg bg-red-50 p-4 text-red-700">{error}</p>}
@@ -43,6 +45,7 @@ const EventsListPage = () => {
                     </article>
                 ))}
             </div>
+            <Pagination pagination={pagination} onPageChange={setPage} />
             <SubscribeSection />
             <Footer />
         </section>

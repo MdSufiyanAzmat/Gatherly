@@ -1,6 +1,6 @@
 const Booking = require('../models/booking');
 const Event = require('../models/event');
-const { safeEnqueue } = require('../queues/emailQueue');
+const { sendBookingRejectedEmail, sendNotification } = require('./emailService');
 
 const STALE_BOOKING_AGE_MS = 24 * 60 * 60 * 1000;
 
@@ -28,14 +28,13 @@ const cancelStalePendingBookings = async () => {
         await Event.findByIdAndUpdate(booking.eventId, { $inc: { availableSeats: 1 } });
         cancelled += 1;
 
-        // Phase 3's worker handles this job type; queue failure is intentionally non-blocking.
-        void safeEnqueue('booking-rejected-email', {
-            to: candidate.userId?.email,
-            name: candidate.userId?.name,
-            eventTitle: candidate.eventId?.title || 'your event',
-            reason: 'Your payment hold expired because no payment proof was submitted within 24 hours.',
-            isAutoCancelled: true,
-        });
+        void sendNotification('expired booking email', () => sendBookingRejectedEmail(
+            candidate.userId?.email,
+            candidate.userId?.name,
+            candidate.eventId?.title || 'your event',
+            'Your payment hold expired because no payment proof was submitted within 24 hours.',
+            { isAutoCancelled: true }
+        ));
     }
 
     return { cancelled, cutoff };

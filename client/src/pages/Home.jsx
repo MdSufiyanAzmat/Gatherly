@@ -19,8 +19,8 @@ const Home = () => {
 
     const fetchEvents = async () => {
         try {
-            const { data } = await api.get(`/events?search=${search}`);
-            setEvents(data);
+            const { data } = await api.get('/events', { params: { search, limit: 6 } });
+            setEvents(data.data.events);
         } catch (error) {
             console.error('Error fetching events:', error);
         } finally {

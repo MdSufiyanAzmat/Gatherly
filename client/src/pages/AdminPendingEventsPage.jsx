@@ -3,18 +3,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { approveEvent, fetchPendingEvents, rejectEvent } from '../store/eventsSlice';
+import Pagination from '../components/Pagination';
 
 const AdminPendingEventsPage = () => {
     const { user } = useContext(AuthContext);
     const dispatch = useDispatch();
-    const { pendingEvents, loading, error } = useSelector((state) => state.events);
+    const { pendingEvents, pendingPagination, loading, error } = useSelector((state) => state.events);
     const [rejecting, setRejecting] = useState(null);
     const [reason, setReason] = useState('');
     const [actionError, setActionError] = useState('');
+    const [page, setPage] = useState(1);
 
     useEffect(() => {
-        if (user?.role === 'admin') dispatch(fetchPendingEvents());
-    }, [dispatch, user]);
+        if (user?.role === 'admin') dispatch(fetchPendingEvents({ page }));
+    }, [dispatch, user, page]);
 
     if (!user || user.role !== 'admin') return <Navigate to="/" replace />;
 
@@ -22,7 +24,7 @@ const AdminPendingEventsPage = () => {
         setActionError('');
         try {
             await dispatch(approveEvent(id)).unwrap();
-            dispatch(fetchPendingEvents());
+            dispatch(fetchPendingEvents({ page }));
         } catch (message) { setActionError(message); }
     };
 
@@ -33,7 +35,7 @@ const AdminPendingEventsPage = () => {
             await dispatch(rejectEvent({ id: rejecting, reason })).unwrap();
             setRejecting(null);
             setReason('');
-            dispatch(fetchPendingEvents());
+            dispatch(fetchPendingEvents({ page }));
         } catch (message) { setActionError(message); }
     };
 
@@ -56,6 +58,7 @@ const AdminPendingEventsPage = () => {
                 </table>
                 {!loading && pendingEvents.length === 0 && <p className="p-10 text-center text-gray-500">No events are awaiting approval.</p>}
             </div>
+            <Pagination pagination={pendingPagination} onPageChange={setPage} />
             {rejecting && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"><div role="dialog" aria-modal="true" className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl"><h2 className="text-xl font-bold">Reject event</h2><p className="mt-2 text-sm text-gray-600">Tell the organizer why this submission was rejected.</p><textarea value={reason} onChange={(e) => setReason(e.target.value)} rows="4" className="mt-4 w-full rounded border border-gray-300 p-3" autoFocus /><div className="mt-5 flex justify-end gap-3"><button onClick={() => setRejecting(null)} className="rounded px-4 py-2 font-bold">Cancel</button><button onClick={reject} className="rounded bg-red-600 px-4 py-2 font-bold text-white">Reject event</button></div></div></div>}
         </section>
     );

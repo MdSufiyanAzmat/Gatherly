@@ -30,7 +30,7 @@ const AdminDashboard = () => {
                 api.get('/bookings')
             ]);
             setEvents(eventsRes.data.data.events);
-            setBookings(bookingsRes.data.data || []);
+            setBookings(bookingsRes.data.data.bookings || []);
         } catch (error) {
             console.error('Error fetching admin data', error);
         } finally {

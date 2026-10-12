@@ -21,12 +21,12 @@ export const submitEvent = createAsyncThunk('events/submit', async (event, thunk
     request(thunkApi, async () => (await api.post('/events', event)).data.data)
 );
 
-export const fetchMyEvents = createAsyncThunk('events/fetchMine', async (_, thunkApi) =>
-    request(thunkApi, async () => (await api.get('/events/mine')).data.data)
+export const fetchMyEvents = createAsyncThunk('events/fetchMine', async (params = {}, thunkApi) =>
+    request(thunkApi, async () => (await api.get('/events/mine', { params })).data.data)
 );
 
-export const fetchPendingEvents = createAsyncThunk('events/fetchPending', async (_, thunkApi) =>
-    request(thunkApi, async () => (await api.get('/events/admin/pending')).data.data)
+export const fetchPendingEvents = createAsyncThunk('events/fetchPending', async (params = {}, thunkApi) =>
+    request(thunkApi, async () => (await api.get('/events/admin/pending', { params })).data.data)
 );
 
 export const approveEvent = createAsyncThunk('events/approve', async (id, thunkApi) =>
@@ -50,7 +50,9 @@ const eventsSlice = createSlice({
         publicEvents: [],
         pagination: null,
         myEvents: [],
+        myPagination: null,
         pendingEvents: [],
+        pendingPagination: null,
         currentEvent: null,
         loading: false,
         error: null,
@@ -73,11 +75,13 @@ const eventsSlice = createSlice({
             })
             .addCase(fetchMyEvents.fulfilled, (state, action) => {
                 state.loading = false;
-                state.myEvents = action.payload;
+                state.myEvents = action.payload.events;
+                state.myPagination = action.payload.pagination;
             })
             .addCase(fetchPendingEvents.fulfilled, (state, action) => {
                 state.loading = false;
-                state.pendingEvents = action.payload;
+                state.pendingEvents = action.payload.events;
+                state.pendingPagination = action.payload.pagination;
             })
             .addCase(approveEvent.fulfilled, (state, action) => {
                 state.loading = false;

@@ -1,7 +1,8 @@
 const Event = require('../models/event');
 const Booking = require('../models/booking');
-const { safeEnqueue } = require('../queues/emailQueue');
+const { sendBookingRejectedEmail, sendNotification } = require('../services/emailService');
 const { notifySubscribersOfNewEvent } = require('../services/eventNotificationService');
+const { getPagination, paginationMetadata } = require('../utils/pagination');
 
 const httpError = (statusCode, message) => Object.assign(new Error(message), { statusCode });
 const eventFields = ['title', 'description', 'date', 'location', 'category', 'totalSeats', 'ticketPrice'];
@@ -106,8 +107,7 @@ exports.submitAdminEvent = (req, res, next) => createEvent(req, res, next, { app
 
 exports.getPublicEvents = async (req, res, next) => {
     try {
-        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 12, 1), 100);
+        const pagination = getPagination(req.query);
         const filters = { status: 'approved' };
 
         if (req.query.search?.trim()) {
@@ -131,14 +131,14 @@ exports.getPublicEvents = async (req, res, next) => {
             Event.find(filters)
                 .populate('createdBy', 'name avatar')
                 .sort({ date: 1 })
-                .skip((page - 1) * limit)
-                .limit(limit),
+                .skip(pagination.skip)
+                .limit(pagination.limit),
             Event.countDocuments(filters),
         ]);
 
         res.json({
             success: true,
-            data: { events, pagination: { page, limit, total, pages: Math.ceil(total / limit) } },
+            data: { events, pagination: paginationMetadata(pagination, total) },
             message: 'Public events retrieved',
         });
     } catch (error) {
@@ -161,10 +161,14 @@ exports.getEventById = async (req, res, next) => {
 
 exports.getMyEvents = async (req, res, next) => {
     try {
-        const events = await Event.find({ createdBy: req.user._id })
-            .populate('createdBy', 'name avatar')
-            .sort({ createdAt: -1 });
-        res.json({ success: true, data: events, message: 'Your events retrieved' });
+        const pagination = getPagination(req.query);
+        const filter = { createdBy: req.user._id };
+        const [events, total] = await Promise.all([
+            Event.find(filter).populate('createdBy', 'name avatar').sort({ createdAt: -1 })
+                .skip(pagination.skip).limit(pagination.limit),
+            Event.countDocuments(filter),
+        ]);
+        res.json({ success: true, data: { events, pagination: paginationMetadata(pagination, total) }, message: 'Your events retrieved' });
     } catch (error) {
         next(error);
     }
@@ -187,10 +191,14 @@ exports.registerExternal = async (req, res, next) => {
 
 exports.getPendingEvents = async (req, res, next) => {
     try {
-        const events = await Event.find({ status: 'pending' })
-            .populate('createdBy', 'name avatar email')
-            .sort({ createdAt: -1 });
-        res.json({ success: true, data: events, message: 'Pending events retrieved' });
+        const pagination = getPagination(req.query);
+        const filter = { status: 'pending' };
+        const [events, total] = await Promise.all([
+            Event.find(filter).populate('createdBy', 'name avatar email').sort({ createdAt: -1 })
+                .skip(pagination.skip).limit(pagination.limit),
+            Event.countDocuments(filter),
+        ]);
+        res.json({ success: true, data: { events, pagination: paginationMetadata(pagination, total) }, message: 'Pending events retrieved' });
     } catch (error) {
         next(error);
     }
@@ -284,13 +292,10 @@ exports.deleteEvent = async (req, res, next) => {
         await event.deleteOne();
 
         affectedBookings.forEach((booking) => {
-            void safeEnqueue('booking-rejected-email', {
-                to: booking.userId?.email,
-                name: booking.userId?.name,
-                eventTitle: event.title,
-                reason: 'The organizer cancelled this event.',
-                eventCancelled: true,
-            });
+            void sendNotification('event cancellation email', () => sendBookingRejectedEmail(
+                booking.userId?.email, booking.userId?.name, event.title,
+                'The organizer cancelled this event.', { eventCancelled: true }
+            ));
         });
         res.json({ success: true, data: { id: req.params.id }, message: 'Event deleted' });
     } catch (error) {

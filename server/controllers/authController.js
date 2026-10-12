@@ -1,7 +1,6 @@
 const User = require('../models/user')
 const OTP = require('../models/OTP')
-const {sendOtpEmail} = require('../services/emailService')
-const { safeEnqueue } = require('../queues/emailQueue')
+const {sendOtpEmail, sendWelcomeEmail, sendNotification} = require('../services/emailService')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
@@ -91,7 +90,7 @@ exports.verifyOtp = async (req, res) => {
     const user = await User.findOneAndUpdate({email}, {isVerified: true})
     await OTP.deleteMany({email, action: 'account_verification'})
 
-    void safeEnqueue('welcome-email', { to: user.email, name: user.name });
+    void sendNotification('welcome email', () => sendWelcomeEmail(user.email, user.name));
 
     res.json({
         message: "Account verified successfully you can log in now.",

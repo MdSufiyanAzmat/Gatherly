@@ -16,8 +16,7 @@ if (process.env.REDIS_PASSWORD) {
 
 const connection = new Redis(connectionOptions);
 
-// Redis is optional for HTTP requests: queues reconnect in the background and
-// safeEnqueue makes notification failures non-blocking.
+// Redis is used only by the background stale-booking cleanup scheduler.
 connection.on('connect', () => console.log('Redis connected'));
 connection.on('error', (error) => console.error('Redis connection error:', error.message));
 

@@ -23,8 +23,8 @@ const SubscribeSection = ({ handleSubscribe = (email) => api.post('/subscription
             await handleSubscribe(email.trim());
             setMessage("You're subscribed! We'll notify you about new events.");
             setEmail('');
-        } catch {
-            setError('We could not subscribe you right now. Please try again.');
+        } catch (error) {
+            setError(error.response?.data?.message || 'We could not subscribe you right now. Please try again.');
         } finally {
             setSubmitting(false);
         }

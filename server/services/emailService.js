@@ -61,11 +61,9 @@ const sendOtpEmail = async (email, otp, type) => {
     }
 };
 
-// Do not catch errors here: BullMQ needs the rejection to retry the job.
 const send = (to, subject, html) => transporter.sendMail({ from: process.env.EMAIL_USER, to, subject, html });
 const greeting = (name) => `<p>Hi <strong>${name || 'there'}</strong>,</p>`;
 
-// Do not catch errors below: a rejected job must reach BullMQ so its retry policy applies.
 const sendWelcomeEmail = (to, name) => send(to, 'Welcome to Gatherly!', `${greeting(name)}<p>Your account has been verified. You can now discover and book events.</p>`);
 const sendRegistrationLinkEmail = (to, name, eventTitle, registrationLink) => send(to, `Registration link: ${eventTitle}`, `${greeting(name)}<p>Complete registration for <strong>${eventTitle}</strong> at <a href="${registrationLink}">the organizer's link</a>.</p>`);
 const sendRegistrationConfirmationEmail = (to, name, eventTitle) => send(to, `Registration recorded: ${eventTitle}`, `${greeting(name)}<p>Your registration for <strong>${eventTitle}</strong> was recorded.</p>`);
@@ -78,9 +76,21 @@ const sendNewEventEmail = ({ to, eventTitle, eventDate, eventLocation, eventId }
     return send(to, `New event: ${eventTitle}`, `<p>A new event has been published on Gatherly.</p><p><strong>${eventTitle}</strong></p><p>${new Date(eventDate).toLocaleDateString()}${eventLocation ? ` · ${eventLocation}` : ''}</p><p><a href="${eventUrl}">View event</a></p>`);
 };
 
+/**
+ * Delivers a notification directly through Nodemailer without making the
+ * completed request fail when the mail provider is temporarily unavailable.
+ */
+const sendNotification = async (label, sendEmail) => {
+    try {
+        await sendEmail();
+    } catch (error) {
+        console.error(`Unable to send ${label}:`, error.message);
+    }
+};
+
 module.exports = {
     transporter, sendBookingEmail, sendOtpEmail, sendWelcomeEmail,
     sendRegistrationLinkEmail, sendRegistrationConfirmationEmail,
     sendBookingConfirmedEmail, sendBookingRejectedEmail,
-    sendOwnerBookingNotification, sendProofSubmittedNotification, sendNewEventEmail,
+    sendOwnerBookingNotification, sendProofSubmittedNotification, sendNewEventEmail, sendNotification,
 };

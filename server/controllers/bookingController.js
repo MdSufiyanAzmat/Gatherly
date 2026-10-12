@@ -2,20 +2,27 @@ const fs = require('fs');
 const path = require('path');
 const Booking = require('../models/booking');
 const Event = require('../models/event');
-const { safeEnqueue } = require('../queues/emailQueue');
+const { getPagination, paginationMetadata } = require('../utils/pagination');
+const {
+    sendBookingConfirmedEmail,
+    sendBookingRejectedEmail,
+    sendOwnerBookingNotification,
+    sendProofSubmittedNotification,
+    sendNotification,
+} = require('../services/emailService');
 
 const httpError = (statusCode, message) => Object.assign(new Error(message), { statusCode });
 const sameId = (left, right) => left?.toString() === right?.toString();
 const eventPopulate = { path: 'eventId', select: 'title date ticketPrice image' };
 const userPopulate = { path: 'userId', select: 'name email' };
 
-const queueBookingConfirmed = (booking) => {
-    void safeEnqueue('booking-confirmed-email', {
-        to: booking.userId?.email,
-        name: booking.userId?.name,
-        eventTitle: booking.eventId?.title,
-        amount: booking.amount,
-    });
+const sendBookingConfirmed = (booking) => {
+    void sendNotification('booking confirmation email', () => sendBookingConfirmedEmail(
+        booking.userId?.email,
+        booking.userId?.name,
+        booking.eventId?.title,
+        booking.amount,
+    ));
 };
 
 
@@ -59,20 +66,11 @@ exports.createFreeBooking = async (req, res, next) => {
 
         res.status(201).json({ success: true, data: booking, message: 'Registered!' });
 
-        void safeEnqueue('booking-confirmed-email', {
-            to: req.user.email,
-            name: req.user.name,
-            eventTitle: event.title,
-            amount: 0,
-        });
-        void safeEnqueue('booking-new-owner-notify', {
-            to: event.createdBy.email,
-            ownerName: event.createdBy.name,
-            buyerName: req.user.name,
-            buyerEmail: req.user.email,
-            eventTitle: event.title,
-            amount: 0,
-        });
+        void sendNotification('booking confirmation email', () => sendBookingConfirmedEmail(req.user.email, req.user.name, event.title, 0));
+        void sendNotification('new booking notification', () => sendOwnerBookingNotification({
+            to: event.createdBy.email, ownerName: event.createdBy.name, buyerName: req.user.name,
+            buyerEmail: req.user.email, eventTitle: event.title, amount: 0,
+        }));
     } catch (error) {
         next(error);
     }
@@ -154,14 +152,10 @@ exports.submitPaymentProof = async (req, res, next) => {
         await booking.save();
 
         res.json({ success: true, data: booking, message: 'Proof submitted. Awaiting owner approval.' });
-        void safeEnqueue('booking-proof-submitted-owner-notify', {
-            to: booking.ownerId.email,
-            ownerName: booking.ownerId.name,
-            buyerName: req.user.name,
-            buyerEmail: req.user.email,
-            eventTitle: booking.eventId?.title,
-            bookingId: booking._id.toString(),
-        });
+        void sendNotification('payment proof notification', () => sendProofSubmittedNotification({
+            to: booking.ownerId.email, ownerName: booking.ownerId.name, buyerName: req.user.name,
+            buyerEmail: req.user.email, eventTitle: booking.eventId?.title, bookingId: booking._id.toString(),
+        }));
     } catch (error) {
         next(error);
     }
@@ -180,7 +174,7 @@ exports.ownerConfirmBooking = async (req, res, next) => {
             console.warn(`Organizer confirmed booking ${booking._id} without payment proof.`);
         }
         res.json({ success: true, data: booking, message: 'Booking confirmed.' });
-        queueBookingConfirmed(booking);
+        sendBookingConfirmed(booking);
     } catch (error) {
         next(error);
     }
@@ -200,12 +194,9 @@ exports.ownerRejectBooking = async (req, res, next) => {
 
         await Event.findByIdAndUpdate(booking.eventId._id, { $inc: { availableSeats: 1 } });
         res.json({ success: true, data: booking, message: 'Booking rejected and seat restored.' });
-        void safeEnqueue('booking-rejected-email', {
-            to: booking.userId?.email,
-            name: booking.userId?.name,
-            eventTitle: booking.eventId?.title,
-            reason,
-        });
+        void sendNotification('booking rejection email', () => sendBookingRejectedEmail(
+            booking.userId?.email, booking.userId?.name, booking.eventId?.title, reason
+        ));
     } catch (error) {
         next(error);
     }
@@ -229,15 +220,11 @@ exports.cancelBooking = async (req, res, next) => {
 
         // A buyer cancelling a paid pending request may already have transferred money.
         if (!booking.isFreeEvent && current.status === 'pending' && current.paymentStatus === 'paid') {
-            void safeEnqueue('booking-new-owner-notify', {
-                to: booking.ownerId?.email,
-                ownerName: booking.ownerId?.name,
-                buyerName: booking.userId?.name,
-                buyerEmail: booking.userId?.email,
-                eventTitle: booking.eventId?.title,
-                amount: booking.amount,
+            void sendNotification('booking cancellation notification', () => sendOwnerBookingNotification({
+                to: booking.ownerId?.email, ownerName: booking.ownerId?.name, buyerName: booking.userId?.name,
+                buyerEmail: booking.userId?.email, eventTitle: booking.eventId?.title, amount: booking.amount,
                 cancellation: true,
-            });
+            }));
         }
     } catch (error) {
         next(error);
@@ -254,11 +241,13 @@ exports.getOwnedBookings = async (req, res, next) => {
         }
         if (req.query.eventId) filter.eventId = req.query.eventId;
 
-        const bookings = await Booking.find(filter)
-            .populate(userPopulate)
-            .populate(eventPopulate)
-            .sort({ createdAt: -1 });
-        res.json({ success: true, data: bookings, message: 'Owned bookings retrieved.' });
+        const pagination = getPagination(req.query);
+        const [bookings, total] = await Promise.all([
+            Booking.find(filter).populate(userPopulate).populate(eventPopulate).sort({ createdAt: -1 })
+                .skip(pagination.skip).limit(pagination.limit),
+            Booking.countDocuments(filter),
+        ]);
+        res.json({ success: true, data: { bookings, pagination: paginationMetadata(pagination, total) }, message: 'Owned bookings retrieved.' });
     } catch (error) {
         next(error);
     }
@@ -294,8 +283,13 @@ exports.getOwnedBookingSummary = async (req, res, next) => {
 
 exports.getAllBookings = async (req, res, next) => {
     try {
-        const bookings = await Booking.find().populate(userPopulate).populate(eventPopulate).sort({ createdAt: -1 });
-        res.json({ success: true, data: bookings, message: 'All bookings retrieved.' });
+        const pagination = getPagination(req.query);
+        const [bookings, total] = await Promise.all([
+            Booking.find().populate(userPopulate).populate(eventPopulate).sort({ createdAt: -1 })
+                .skip(pagination.skip).limit(pagination.limit),
+            Booking.countDocuments(),
+        ]);
+        res.json({ success: true, data: { bookings, pagination: paginationMetadata(pagination, total) }, message: 'All bookings retrieved.' });
     } catch (error) {
         next(error);
     }
@@ -303,8 +297,14 @@ exports.getAllBookings = async (req, res, next) => {
 
 exports.getMyBookings = async (req, res, next) => {
     try {
-        const bookings = await Booking.find({ userId: req.user._id }).populate(eventPopulate).sort({ createdAt: -1 });
-        res.json({ success: true, data: bookings, message: 'Your bookings retrieved.' });
+        const pagination = getPagination(req.query);
+        const filter = { userId: req.user._id };
+        const [bookings, total] = await Promise.all([
+            Booking.find(filter).populate(eventPopulate).sort({ createdAt: -1 })
+                .skip(pagination.skip).limit(pagination.limit),
+            Booking.countDocuments(filter),
+        ]);
+        res.json({ success: true, data: { bookings, pagination: paginationMetadata(pagination, total) }, message: 'Your bookings retrieved.' });
     } catch (error) {
         next(error);
     }

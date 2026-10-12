@@ -11,7 +11,6 @@ const bookingRoutes = require('./routes/booking')
 const adminEventRoutes = require('./routes/adminEvent')
 const subscriptionRoutes = require('./routes/subscription')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
-const { ensureStaleBookingCleanupSchedule, startBookingCleanupWorker } = require('./queues/bookingCleanupQueue')
 
 app.use(cors())
 app.use(express.json())
@@ -39,20 +38,21 @@ const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://
 mongoose.connect(mongoUri)
 .then(async ()=>{
     console.log('Connected to Mongo Db')
-    // Keep notification delivery working for the standard `npm start` setup.
-    // A separately started worker may also consume this queue in production.
-    require('./workers/emailWorker')
-    try {
-        await ensureStaleBookingCleanupSchedule()
-        startBookingCleanupWorker()
-    } catch (error) {
-        // Booking APIs stay available when Redis is unavailable; notifications/cleanup resume after reconnect.
-        console.error('Unable to start stale booking cleanup scheduler:', error.message)
-    }
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`)
     });
+
+    // Redis is optional. Enable this only in environments that run Redis.
+    if (process.env.ENABLE_BOOKING_CLEANUP === 'true') {
+        const { ensureStaleBookingCleanupSchedule, startBookingCleanupWorker } = require('./queues/bookingCleanupQueue');
+        try {
+            await ensureStaleBookingCleanupSchedule();
+            startBookingCleanupWorker();
+        } catch (error) {
+            console.error('Unable to start stale booking cleanup scheduler:', error.message);
+        }
+    }
 }).catch((err) => {
     console.error('Unable to connect to MongoDB. The API was not started:', err.message)
     process.exitCode = 1
