@@ -36,23 +36,12 @@ app.use(errorHandler)
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/gatherly';
 
 mongoose.connect(mongoUri)
-.then(async ()=>{
+.then(()=>{
     console.log('Connected to Mongo Db')
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`)
     });
-
-    // Redis is optional. Enable this only in environments that run Redis.
-    if (process.env.ENABLE_BOOKING_CLEANUP === 'true') {
-        const { ensureStaleBookingCleanupSchedule, startBookingCleanupWorker } = require('./queues/bookingCleanupQueue');
-        try {
-            await ensureStaleBookingCleanupSchedule();
-            startBookingCleanupWorker();
-        } catch (error) {
-            console.error('Unable to start stale booking cleanup scheduler:', error.message);
-        }
-    }
 }).catch((err) => {
     console.error('Unable to connect to MongoDB. The API was not started:', err.message)
     process.exitCode = 1
