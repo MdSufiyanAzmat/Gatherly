@@ -14,12 +14,22 @@ const { notFound, errorHandler } = require('./middlewares/errorHandler')
 
 app.use(cors())
 app.use(express.json())
+
 // Event images are public. Payment proofs deliberately have no static route.
 app.get('/uploads/events/default-event.jpg', (req, res) => {
     // Keep the model's stable JPG-looking URL while serving a lightweight branded fallback.
     res.type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#0D47A1"/><circle cx="555" cy="335" r="82" fill="#2196F3"/><circle cx="645" cy="335" r="82" fill="#90CAF9"/><text x="600" y="535" text-anchor="middle" fill="#E3F2FD" font-family="Arial,sans-serif" font-size="48" font-weight="700">Gatherly</text></svg>');
 })
 app.use('/uploads/events', express.static(path.join(__dirname, 'uploads', 'events')))
+
+// Health check endpoint (useful for Render + uptime monitoring)
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+    });
+})
 
 //Routes
 app.use('/api/auth', authRoutes)
@@ -35,11 +45,20 @@ app.use(errorHandler)
 
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/gatherly';
 
+// TEMPORARY DEBUG — remove after confirming env vars are loaded on Render
+console.log('ENV CHECK:', {
+    PORT: process.env.PORT,
+    hasMongoUri: !!process.env.MONGODB_URI,
+    hasMongoUriAlt: !!process.env.MONGO_URI,
+    hasJwtSecret: !!process.env.JWT_SECRET,
+    nodeEnv: process.env.NODE_ENV
+});
+
 mongoose.connect(mongoUri)
-.then(()=>{
+.then(() => {
     console.log('Connected to Mongo Db')
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`Server is running on port ${PORT}`)
     });
 }).catch((err) => {
