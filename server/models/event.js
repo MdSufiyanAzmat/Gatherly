@@ -8,7 +8,6 @@ const fileSchema = new mongoose.Schema({
 }, { _id: false });
 
 const paymentInfoSchema = new mongoose.Schema({
-    // The organizer's UPI ID or phone number. Gatherly never receives the payment.
     phoneNumber: { type: String, default: null, trim: true },
     qrCode: { type: fileSchema, default: () => ({}) },
     notes: { type: String, default: null, trim: true },
@@ -34,9 +33,7 @@ const eventSchema = new mongoose.Schema({
     },
     paymentInfo: { type: paymentInfoSchema, default: () => ({}) },
     registrationLink: { type: String, default: null, trim: true },
-    // The organizer. Both users and admins may own events.
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    // Used only for deduplication/audit of free in-app registrations.
     registrations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     comments: { type: [commentSchema], default: [] },
@@ -51,7 +48,6 @@ const eventSchema = new mongoose.Schema({
     rejectionReason: { type: String, default: null },
 }, { timestamps: true });
 
-/** True when this event requires an organizer-direct payment. */
 eventSchema.virtual('isPaid').get(function isPaid() {
     return this.ticketPrice > 0;
 });

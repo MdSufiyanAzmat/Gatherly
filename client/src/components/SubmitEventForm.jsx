@@ -7,13 +7,34 @@ const SubmitEventForm = ({ form, image, imagePreview, paid, submitting, error, o
     <>
         {error && <p role="alert" className="mt-6 rounded-lg bg-red-50 p-4 text-red-700">{error}</p>}
         <form onSubmit={onSubmit} className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
-            <label><span className="mb-1 block text-sm font-semibold">Event title</span><input required type="text" value={form.title} onChange={onChange('title')} placeholder="e.g. Annual Tech Meetup 2026" className={fieldClass} /></label>
-            <label><span className="mb-1 block text-sm font-semibold">Category</span><input required type="text" value={form.category} onChange={onChange('category')} placeholder="Choose a category" className={fieldClass} /></label>
-            <label><span className="mb-1 block text-sm font-semibold">Date</span><input required type="date" value={form.date} onChange={onChange('date')} placeholder="Select event date" title="Select event date" className={fieldClass} /></label>
-            <label><span className="mb-1 block text-sm font-semibold">Location</span><input required type="text" value={form.location} onChange={onChange('location')} placeholder="e.g. Bengaluru Convention Center" className={fieldClass} /></label>
-            <label><span className="mb-1 block text-sm font-semibold">Total seats</span><input required min="1" type="number" value={form.totalSeats} onChange={onChange('totalSeats')} placeholder="e.g. 100" className={fieldClass} /></label>
-            <label><span className="mb-1 block text-sm font-semibold">Ticket price</span><input required min="0" type="number" value={form.ticketPrice} onChange={onChange('ticketPrice')} placeholder="e.g. 499 (or 0 for free)" className={fieldClass} /></label>
-            <label className="md:col-span-2"><span className="mb-1 block text-sm font-semibold">Description</span><textarea required rows="5" value={form.description} onChange={onChange('description')} placeholder="Describe your event in a few sentences…" className={fieldClass} /></label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Event title</span>
+                <input required type="text" value={form.title} onChange={onChange('title')} placeholder="e.g. Annual Tech Meetup 2026" className={fieldClass} />
+            </label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Category</span>
+                <input required type="text" value={form.category} onChange={onChange('category')} placeholder="Choose a category" className={fieldClass} />
+            </label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Date</span>
+                <input required type="date" value={form.date} onChange={onChange('date')} placeholder="Select event date" title="Select event date" className={fieldClass} />
+            </label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Location</span>
+                <input required type="text" value={form.location} onChange={onChange('location')} placeholder="e.g. Bengaluru Convention Center" className={fieldClass} />
+            </label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Total seats</span>
+                <input required min="1" type="number" value={form.totalSeats} onChange={onChange('totalSeats')} placeholder="e.g. 100" className={fieldClass} />
+            </label>
+            <label>
+                <span className="mb-1 block text-sm font-semibold">Ticket price</span>
+                <input required min="0" type="number" value={form.ticketPrice} onChange={onChange('ticketPrice')} placeholder="e.g. 499 (or 0 for free)" className={fieldClass} />
+            </label>
+            <label className="md:col-span-2">
+                <span className="mb-1 block text-sm font-semibold">Description</span>
+                <textarea required rows="5" value={form.description} onChange={onChange('description')} placeholder="Describe your event in a few sentences…" className={fieldClass} />
+            </label>
             <label className="md:col-span-2"><span className="mb-1 block text-sm font-semibold">External registration link <span className="font-normal text-muted">(optional)</span></span><input type="url" value={form.registrationLink} onChange={onChange('registrationLink')} placeholder="https://your-event-page.example" className={fieldClass} /></label>
             <label><span className="mb-1 block text-sm font-semibold">Event banner</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={onImageChange} className="w-full rounded-lg text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-secondary/20 file:px-3 file:py-2 file:font-semibold file:text-dark hover:file:bg-secondary/30" aria-describedby="event-banner-hint" /><span id="event-banner-hint" className="mt-1 block text-xs text-muted">Upload an event banner. Image URLs can be added when a remote-image endpoint is connected.</span></label>
             <img src={imagePreview || DEFAULT_EVENT_IMAGE} onError={(event) => { event.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={image ? 'Selected event banner preview' : 'Default event banner preview'} className="h-28 w-full rounded-lg border object-cover" />

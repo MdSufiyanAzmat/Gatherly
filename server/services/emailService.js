@@ -76,10 +76,6 @@ const sendNewEventEmail = ({ to, eventTitle, eventDate, eventLocation, eventId }
     return send(to, `New event: ${eventTitle}`, `<p>A new event has been published on Gatherly.</p><p><strong>${eventTitle}</strong></p><p>${new Date(eventDate).toLocaleDateString()}${eventLocation ? ` · ${eventLocation}` : ''}</p><p><a href="${eventUrl}">View event</a></p>`);
 };
 
-/**
- * Delivers a notification directly through Nodemailer without making the
- * completed request fail when the mail provider is temporarily unavailable.
- */
 const sendNotification = async (label, sendEmail) => {
     try {
         await sendEmail();

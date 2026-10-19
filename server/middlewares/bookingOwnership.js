@@ -1,9 +1,5 @@
 const Booking = require('../models/booking');
 
-/**
- * Loads a booking and permits its event organizer or an administrator to review it.
- * The loaded document is assigned to req.booking for the controller to transition atomically.
- */
 const assertBookingOwner = async (req, res, next) => {
     try {
         const booking = await Booking.findById(req.params.id);

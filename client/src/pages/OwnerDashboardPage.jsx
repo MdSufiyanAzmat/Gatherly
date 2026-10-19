@@ -5,8 +5,12 @@ import { fetchOwnedBookings, fetchOwnedSummary, ownerConfirmBooking, ownerReject
 import Pagination from '../components/Pagination';
 
 const OwnerDashboardPage = () => {
-    const dispatch = useDispatch(); const { ownedBookings, ownedPagination, summary, loading, error } = useSelector((state) => state.bookings);
-    const [openEvent, setOpenEvent] = useState(null); const [rejecting, setRejecting] = useState(null); const [reason, setReason] = useState(''); const [proofUrl, setProofUrl] = useState(null);
+    const dispatch = useDispatch(); 
+    const { ownedBookings, ownedPagination, summary, loading, error } = useSelector((state) => state.bookings);
+    const [openEvent, setOpenEvent] = useState(null); 
+    const [rejecting, setRejecting] = useState(null); 
+    const [reason, setReason] = useState(''); 
+    const [proofUrl, setProofUrl] = useState(null);
     const [page, setPage] = useState(1);
     useEffect(() => { dispatch(fetchOwnedBookings({ page })); dispatch(fetchOwnedSummary()); }, [dispatch, page]);
     const groups = useMemo(() => ownedBookings.reduce((result, booking) => { const key = booking.eventId?._id || 'deleted'; (result[key] ||= { title: booking.eventId?.title || 'Deleted event', bookings: [] }).bookings.push(booking); return result; }, {}), [ownedBookings]);

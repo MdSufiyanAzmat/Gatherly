@@ -4,10 +4,6 @@ const { sendBookingRejectedEmail, sendNotification } = require('./emailService')
 
 const STALE_BOOKING_AGE_MS = 24 * 60 * 60 * 1000;
 
-/**
- * Cancels paid bookings whose 24-hour payment hold expired and restores each held seat once.
- * Compare-and-set updates make repeated jobs and concurrent workers idempotent.
- */
 const cancelStalePendingBookings = async () => {
     const cutoff = new Date(Date.now() - STALE_BOOKING_AGE_MS);
     const candidates = await Booking.find({

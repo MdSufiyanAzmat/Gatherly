@@ -174,7 +174,6 @@ exports.getMyEvents = async (req, res, next) => {
     }
 };
 
-/** Records an authenticated user's external-link registration without creating a booking or reserving a seat. */
 exports.registerExternal = async (req, res, next) => {
     try {
         const event = await Event.findOneAndUpdate(
@@ -279,8 +278,6 @@ exports.deleteEvent = async (req, res, next) => {
         if (!isAdmin(req.user) && !creatorCanDelete) {
             throw httpError(403, 'You are not allowed to delete this event');
         }
-
-        // Existing reservations are cancelled before deletion. Seats no longer matter after the event is gone.
         const affectedBookings = await Booking.find({
             eventId: event._id,
             status: { $in: ['pending', 'confirmed'] },

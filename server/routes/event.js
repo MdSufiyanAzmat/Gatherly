@@ -19,7 +19,6 @@ const {
 router.post('/', protect, userOnly, eventUpload.fields([{ name: 'image', maxCount: 1 }, { name: 'qrCode', maxCount: 1 }]), submitEvent);
 router.get('/', getPublicEvents);
 router.get('/mine', protect, userOnly, getMyEvents);
-// Compatibility alias for clients released before the redesign.
 router.get('/mine/list', protect, userOnly, getMyEvents);
 router.get('/admin/pending', protect, adminOnly, getPendingEvents);
 router.patch('/:id/approve', protect, adminOnly, approveEvent);

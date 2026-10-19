@@ -25,7 +25,7 @@ const sendBookingConfirmed = (booking) => {
     ));
 };
 
-
+//creating booking
 exports.createFreeBooking = async (req, res, next) => {
     try {
         const event = await Event.findById(req.params.eventId).populate('createdBy', 'name email');
@@ -218,7 +218,6 @@ exports.cancelBooking = async (req, res, next) => {
         await Event.findByIdAndUpdate(booking.eventId._id, { $inc: { availableSeats: 1 } });
         res.json({ success: true, data: booking, message: 'Booking cancelled and seat restored.' });
 
-        // A buyer cancelling a paid pending request may already have transferred money.
         if (!booking.isFreeEvent && current.status === 'pending' && current.paymentStatus === 'paid') {
             void sendNotification('booking cancellation notification', () => sendOwnerBookingNotification({
                 to: booking.ownerId?.email, ownerName: booking.ownerId?.name, buyerName: booking.userId?.name,
