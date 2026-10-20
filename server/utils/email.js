@@ -1,22 +1,37 @@
-const nodemailer = require('nodemailer');
-const dotenv = require('dotenv');
-dotenv.config();
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
+const sendBrevoEmail = async ({ to, subject, html }) => {
+    const res = await fetch(BREVO_API_URL, {
+        method: 'POST',
+        headers: {
+            'api-key': process.env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            sender: {
+                name: 'Gatherly Team',
+                email: process.env.EMAIL_USER,
+            },
+            to: [{ email: to }],
+            subject,
+            htmlContent: html,
+        }),
+    });
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS  
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Brevo API error ${res.status}: ${err}`);
     }
-});
+
+    return res.json();
+};
 
 const sendBookingEmail = async (userEmail, userName, eventTitle) => {
     try {
-        const mailOptions = {
-            from: process.env.EMAIL_USER, 
-            to: userEmail,                
-            subject: `Booking Confirmed: ${eventTitle}`,  
+        await sendBrevoEmail({
+            to: userEmail,
+            subject: `Booking Confirmed: ${eventTitle}`,
             html: `
                 <h2>Booking Confirmed! 🎉</h2>
                 <p><strong>Dear ${userName},</strong></p>
@@ -24,12 +39,9 @@ const sendBookingEmail = async (userEmail, userName, eventTitle) => {
                 <p>We look forward to seeing you at the event!</p>
                 <br>
                 <p>Best regards,<br>Gatherly Team</p>
-            `
-        };
-        
-        await transporter.sendMail(mailOptions);
+            `,
+        });
         console.log(`Booking email sent to ${userEmail} for ${eventTitle}`);
-        
     } catch (error) {
         console.log('Error sending booking email: ', error);
     }
@@ -37,17 +49,16 @@ const sendBookingEmail = async (userEmail, userName, eventTitle) => {
 
 const sendOtpEmail = async (email, otp, type) => {
     try {
-        const title = type === 'account_verification' 
-            ? 'Verify Your Account' 
+        const title = type === 'account_verification'
+            ? 'Verify Your Account'
             : 'Gatherly Booking Verification';
-        
+
         const msg = type === 'account_verification'
             ? 'Please use the following OTP to verify your new Gatherly account'
             : 'Please use the following OTP to verify and confirm your event booking';
-        
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,                              
+
+        await sendBrevoEmail({
+            to: email,
             subject: title,
             html: `
                 <h2>${title}</h2>
@@ -57,13 +68,11 @@ const sendOtpEmail = async (email, otp, type) => {
                 <br>
                 <p>If you didn't request this, please ignore this email.</p>
                 <p>Best regards,<br>Gatherly Team</p>
-            ` 
-        };
-        
-        await transporter.sendMail(mailOptions);
-        
+            `,
+        });
     } catch (error) {
         console.log(`Unable to send OTP to ${email} for ${type}:`, error);
     }
 };
+
 module.exports = { sendBookingEmail, sendOtpEmail };
