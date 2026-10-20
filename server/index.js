@@ -11,28 +11,28 @@ const bookingRoutes = require('./routes/booking')
 const adminEventRoutes = require('./routes/adminEvent')
 const subscriptionRoutes = require('./routes/subscription')
 const { notFound, errorHandler } = require('./middlewares/errorHandler')
-const mongoSanitize = require('@exortek/express-mongo-sanitize'); 
+const mongoSanitize = require('@exortek/express-mongo-sanitize')
 
 app.use(cors())
 app.use(express.json())
-app.use(mongoSanitize());
+app.use(mongoSanitize())
 
 
-const url = `https://gatherly-frontend-sk1t.onrender.com/`;
-const interval = 780000;
+const url = `https://gatherly-frontend-sk1t.onrender.com/`
+const interval = 780000
 
 function reloadWebsite() {
   axios
     .get(url)
     .then((response) => {
-      console.log("website reloded");
+      console.log("website reloded")
     })
     .catch((error) => {
-      console.error(`Error : ${error.message}`);
-    });
+      console.error(`Error : ${error.message}`)
+    })
 }
 
-setInterval(reloadWebsite, interval);
+setInterval(reloadWebsite, interval)
 
 app.get('/uploads/events/default-event.jpg', (req, res) => {
     res.type('image/svg+xml').send('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect width="1200" height="675" fill="#0D47A1"/><circle cx="555" cy="335" r="82" fill="#2196F3"/><circle cx="645" cy="335" r="82" fill="#90CAF9"/><text x="600" y="535" text-anchor="middle" fill="#E3F2FD" font-family="Arial,sans-serif" font-size="48" font-weight="700">Gatherly</text></svg>');
