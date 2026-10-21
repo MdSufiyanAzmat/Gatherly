@@ -6,6 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import PaymentModal from '../components/PaymentModal';
 import EventStatusBadge from '../components/EventStatusBadge';
 import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
+import { isEventFinished } from '../utils/eventDate';
 
 const EventDetail = () => {
     const { id } = useParams();
@@ -23,6 +24,9 @@ const EventDetail = () => {
     const [comments, setComments] = useState([]);
 
     useEffect(() => {
+        setLoading(true);
+        setError('');
+        setEvent(null);
         api.get(`/events/${id}`)
             .then(({ data }) => {
                 const loadedEvent = data.data;
@@ -31,7 +35,7 @@ const EventDetail = () => {
                 setLiked(Boolean(loadedEvent.likedByCurrentUser));
                 setComments(loadedEvent.comments || []);
             })
-            .catch(() => setError('Failed to load event details.'))
+            .catch((requestError) => setError(requestError.response?.data?.message || 'Failed to load event details.'))
             .finally(() => setLoading(false));
     }, [id]);
 
@@ -44,13 +48,27 @@ const EventDetail = () => {
     };
 
     const registerExternal = async () => {
-        if (requireLogin()) return;
-        window.open(event.registrationLink, '_blank', 'noopener,noreferrer');
-        api.post(`/events/${event._id}/register`).catch(() => {});
+        // Open the tab during the click event so browsers do not treat the
+        // organizer link as an unsolicited popup after the API request.
+        const registrationWindow = window.open('', '_blank');
+        try {
+            await api.post(`/events/${event._id}/register`);
+            if (registrationWindow) {
+                registrationWindow.opener = null;
+                registrationWindow.location.href = event.registrationLink;
+            } else {
+                window.open(event.registrationLink, '_blank', 'noopener,noreferrer');
+            }
+            setNotice('Registration recorded. Continue on the organizer site.');
+        } catch (error) {
+            registrationWindow?.close();
+            throw error;
+        }
     };
 
     const register = async () => {
         if (requireLogin()) return;
+        if (isEventFinished(event.date)) return;
         setActionLoading(true);
         setError('');
         try {
@@ -98,11 +116,12 @@ const EventDetail = () => {
     if (!event) return <p className="py-20 text-center text-red-600">{error || 'Event not found'}</p>;
 
     const soldOut = event.availableSeats <= 0;
+    const finished = isEventFinished(event.date);
     const isCreator = user?._id === event.createdBy?._id;
 
     return (
         <div className="mx-auto mt-8 max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl">
-            <img src={assetUrl(event.image?.url)} onError={(target) => { target.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={event.title} className="h-80 w-full object-cover" />
+            <img src={assetUrl(event.image?.url || DEFAULT_EVENT_IMAGE)} onError={(target) => { target.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={event.title} className="h-80 w-full object-cover" />
             <div className="p-8 md:p-12">
                 <div className="flex flex-col justify-between gap-8 md:flex-row">
                     <div>
@@ -120,7 +139,8 @@ const EventDetail = () => {
                         <p className="mt-1 text-2xl font-black">{Number(event.ticketPrice) ? `₹${event.ticketPrice}` : <span className="text-emerald-600">Free</span>}</p>
                         <p className="mt-5 text-sm font-bold uppercase text-gray-500">Availability</p><p className="mt-1 font-bold">{event.availableSeats} / {event.totalSeats} seats</p>
                         <p className="mt-5 text-sm"><strong>Date:</strong> {new Date(event.date).toLocaleDateString()}</p><p className="mt-2 text-sm"><strong>Location:</strong> {event.location}</p>
-                        <button onClick={register} disabled={actionLoading || (!event.registrationLink && soldOut)} className="mt-6 w-full rounded-lg bg-primary px-4 py-3 font-bold text-white transition hover:bg-dark focus:outline-none focus:ring-4 focus:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-50">{actionLoading ? 'Processing…' : event.registrationLink ? 'Register on organizer site' : soldOut ? 'Sold out' : Number(event.ticketPrice) ? 'Pay & register' : 'Register free'}</button>
+                        {finished && <p className="mt-4 font-bold text-red-600">Finished</p>}
+                        <button onClick={register} disabled={actionLoading || finished || (!event.registrationLink && soldOut)} className="mt-6 w-full rounded-lg bg-primary px-4 py-3 font-bold text-white transition hover:bg-dark focus:outline-none focus:ring-4 focus:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-50">{actionLoading ? 'Processing…' : finished ? 'Event finished' : event.registrationLink ? 'Register on organizer site' : soldOut ? 'Sold out' : Number(event.ticketPrice) ? 'Pay & register' : 'Register free'}</button>
                         {error && <p className="mt-3 text-sm text-red-700">{error}</p>}{notice && <p className="mt-3 rounded bg-emerald-50 p-2 text-sm text-emerald-700">{notice}</p>}
                     </aside>
                 </div>

@@ -1,59 +1,54 @@
-const jwt = require('jsonwebtoken')
-const User = require('../models/user')
+const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
-const getBearerToken = (req) => (
-    req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
-        ? req.headers.authorization.split(' ')[1]
-        : null
-)
+const getToken = (req) => {
+    if (req.cookies?.token) return req.cookies.token;
+    if (req.headers.authorization?.startsWith('Bearer '))
+        return req.headers.authorization.split(' ')[1];
+    return null;
+};
 
-const protect = async (req, res, next)=> {
-    const token = getBearerToken(req)
+const protect = async (req, res, next) => {
+    const token = getToken(req);
 
-    if(token){
-        try{
-            const decoded = jwt.verify(token, process.env.SECRET_KEY)
-            req.user = await User.findById(decoded.id).select('-password')
-            if(!req.user){
-                return res.status(401).json({success: false, data: null, message: "Not authorized! User not found."})
-            }
-            next()
-        }catch(error){
-            return res.status(401).json({success: false, data: null, message: "Token failed"})
-        }
-    }else{
-        return res.status(401).json({success: false, data: null, message: "No token found"})
-    }
-}
-
-const optionalAuth = async (req, res, next) => {
-    const token = getBearerToken(req)
-    if (!token) return next()
+    if (!token)
+        return res.status(401).json({ success: false, data: null, message: 'No token found' });
 
     try {
-        const decoded = jwt.verify(token, process.env.SECRET_KEY)
-        const user = await User.findById(decoded.id).select('-password')
-        if (!user) {
-            return res.status(401).json({success: false, data: null, message: 'Not authorized! User not found.'})
-        }
-        req.user = user
-        next()
-    } catch (error) {
-        return res.status(401).json({success: false, data: null, message: 'Token failed'})
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        req.user = await User.findById(decoded.id).select('-password');
+        if (!req.user)
+            return res.status(401).json({ success: false, data: null, message: 'Not authorized! User not found.' });
+        next();
+    } catch {
+        return res.status(401).json({ success: false, data: null, message: 'Token failed' });
     }
-}
+};
+
+const optionalAuth = async (req, res, next) => {
+    const token = getToken(req);
+    if (!token) return next();
+
+    try {
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
+        const user = await User.findById(decoded.id).select('-password');
+        // Event details are public. An expired/stale client credential should
+        // not make an otherwise visible event inaccessible.
+        if (user) req.user = user;
+        next();
+    } catch {
+        next();
+    }
+};
 
 const adminOnly = (req, res, next) => {
-    if(req.user && req.user.role === 'admin'){
-        next()
-    }else{
-        return res.status(403).json({success: false, data: null, message: "Access denied! Admin access required."})
-    }
-}
+    if (req.user && req.user.role === 'admin') return next();
+    return res.status(403).json({ success: false, data: null, message: 'Access denied! Admin access required.' });
+};
 
 const userOnly = (req, res, next) => {
     if (req.user?.role === 'user') return next();
     return res.status(403).json({ success: false, data: null, message: 'This action is available to user accounts only.' });
-}
+};
 
-module.exports = {protect, optionalAuth, adminOnly, userOnly, admin: adminOnly}
+module.exports = { protect, optionalAuth, adminOnly, userOnly, admin: adminOnly };

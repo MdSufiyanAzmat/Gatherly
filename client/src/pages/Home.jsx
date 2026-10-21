@@ -4,6 +4,7 @@ import api from '../utils/axios';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaRegClock, FaTicketAlt, FaShieldAlt } from 'react-icons/fa';
 import SubscribeSection from '../components/SubscribeSection';
 import Footer from '../components/Footer';
+import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
 
 const Home = () => {
     const [events, setEvents] = useState([]);
@@ -95,13 +96,7 @@ const Home = () => {
                     {events.map(event => (
                         <div key={event._id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition flex flex-col">
                             <div className="h-48 bg-gray-200 overflow-hidden relative">
-                                {event.imageUrl ? (
-                                    <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-600 font-bold text-2xl">
-                                        {event.category || 'Event'}
-                                    </div>
-                                )}
+                                <img src={assetUrl(event.image?.url || DEFAULT_EVENT_IMAGE)} onError={(target) => { target.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={event.title} className="w-full h-full object-cover" />
                                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-bold shadow-sm">
                                     {event.ticketPrice === 0 ? <span className="text-green-600">FREE</span> : <span className="text-gray-900">₹{event.ticketPrice}</span>}
                                 </div>

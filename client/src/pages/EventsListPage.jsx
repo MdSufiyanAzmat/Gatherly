@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { fetchPublicEvents } from '../store/eventsSlice';
@@ -6,15 +6,26 @@ import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
 import SubscribeSection from '../components/SubscribeSection';
 import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
+import { isEventFinished } from '../utils/eventDate';
 
 const EventsListPage = () => {
     const dispatch = useDispatch();
     const { publicEvents: events, pagination, loading, error } = useSelector((state) => state.events);
     const [search, setSearch] = useState('');
     const [page, setPage] = useState(1);
+    const latestRequest = useRef('');
 
     useEffect(() => {
-        const timer = setTimeout(() => dispatch(fetchPublicEvents({ search, page })), 300);
+        const query = search.trim();
+        const requestKey = `${page}:${query}`;
+        // React Strict Mode repeats effects in development. Do not send the
+        // same list request again unless the search text or page has changed.
+        if (latestRequest.current === requestKey) return undefined;
+
+        const timer = setTimeout(() => {
+            latestRequest.current = requestKey;
+            dispatch(fetchPublicEvents({ search: query, page }));
+        }, 300);
         return () => clearTimeout(timer);
     }, [dispatch, search, page]);
 
@@ -33,13 +44,14 @@ const EventsListPage = () => {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {events.map((event) => (
                     <article key={event._id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-hover">
-                        <img src={assetUrl(event.image?.url)} onError={(e) => { e.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={event.title} className="h-44 w-full object-cover" />
+                        <img src={assetUrl(event.image?.url || DEFAULT_EVENT_IMAGE)} onError={(e) => { e.currentTarget.src = DEFAULT_EVENT_IMAGE; }} alt={event.title} className="h-44 w-full object-cover" />
                         <div className="p-5">
                             <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{event.category}</p>
                             <h2 className="mt-2 text-xl font-bold text-gray-900">{event.title}</h2>
                             <p className="mt-3 text-sm text-gray-600">{new Date(event.date).toLocaleDateString()} · {event.location}</p>
                             <p className="mt-3 text-sm font-medium text-gray-700">Organized by {event.createdBy?.name || 'Gatherly'}</p>
                             <p className="mt-2 text-sm font-bold">{event.ticketPrice ? `₹${event.ticketPrice}` : 'Free'}</p>
+                            {isEventFinished(event.date) && <p className="mt-2 text-sm font-bold text-red-600">Finished</p>}
                             <Link to={`/events/${event._id}`} className="mt-5 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-dark focus:outline-none focus:ring-4 focus:ring-primary/25">View event</Link>
                         </div>
                     </article>

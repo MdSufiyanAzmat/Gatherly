@@ -52,6 +52,11 @@ const validateEventInput = (body) => {
 const ownerId = (event) => (event.createdBy?._id || event.createdBy)?.toString();
 const isOwner = (event, user) => user && ownerId(event) === user._id.toString();
 const isAdmin = (user) => user?.role === 'admin';
+const isEventFinished = (event) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(event.date).getTime() < today.getTime();
+};
 
 const buildFile = (file, directory) => (file ? {
     url: `/uploads/${directory}/${file.filename}`,
@@ -60,6 +65,9 @@ const buildFile = (file, directory) => (file ? {
 
 const serializeEvent = (event, user) => {
     const data = event.toObject ? event.toObject({ virtuals: true }) : event;
+    if (!data.image?.url) {
+        data.image = { url: '/uploads/events/default-event.jpg', filename: 'default-event.jpg' };
+    }
     data.likeCount = data.likes?.length || 0;
     data.likedByCurrentUser = Boolean(user && data.likes?.some((id) => id.toString() === user._id.toString()));
     return data;
@@ -107,7 +115,7 @@ exports.submitAdminEvent = (req, res, next) => createEvent(req, res, next, { app
 
 exports.getPublicEvents = async (req, res, next) => {
     try {
-        const pagination = getPagination(req.query);
+        const pagination = getPagination(req.query, { defaultLimit: 10 });
         const filters = { status: 'approved' };
 
         if (req.query.search?.trim()) {
@@ -130,7 +138,7 @@ exports.getPublicEvents = async (req, res, next) => {
         const [events, total] = await Promise.all([
             Event.find(filters)
                 .populate('createdBy', 'name avatar')
-                .sort({ date: 1 })
+                .sort({ date: -1, _id: -1 })
                 .skip(pagination.skip)
                 .limit(pagination.limit),
             Event.countDocuments(filters),
@@ -138,7 +146,7 @@ exports.getPublicEvents = async (req, res, next) => {
 
         res.json({
             success: true,
-            data: { events, pagination: paginationMetadata(pagination, total) },
+            data: { events: events.map((event) => serializeEvent(event, req.user)), pagination: paginationMetadata(pagination, total) },
             message: 'Public events retrieved',
         });
     } catch (error) {
@@ -168,7 +176,7 @@ exports.getMyEvents = async (req, res, next) => {
                 .skip(pagination.skip).limit(pagination.limit),
             Event.countDocuments(filter),
         ]);
-        res.json({ success: true, data: { events, pagination: paginationMetadata(pagination, total) }, message: 'Your events retrieved' });
+        res.json({ success: true, data: { events: events.map((event) => serializeEvent(event, req.user)), pagination: paginationMetadata(pagination, total) }, message: 'Your events retrieved' });
     } catch (error) {
         next(error);
     }
@@ -176,12 +184,14 @@ exports.getMyEvents = async (req, res, next) => {
 
 exports.registerExternal = async (req, res, next) => {
     try {
-        const event = await Event.findOneAndUpdate(
-            { _id: req.params.id, status: 'approved', registrationLink: { $type: 'string', $ne: '' } },
-            { $addToSet: { registrations: req.user._id } },
-            { new: true }
-        );
+        const event = await Event.findOne({
+            _id: req.params.id,
+            status: 'approved',
+            registrationLink: { $type: 'string', $ne: '' },
+        });
         if (!event) throw httpError(404, 'External registration event not found');
+        if (isEventFinished(event)) throw httpError(400, 'This event has finished. Registration is closed.');
+        await Event.updateOne({ _id: event._id }, { $addToSet: { registrations: req.user._id } });
         res.json({ success: true, data: { id: event._id }, message: 'External registration recorded.' });
     } catch (error) {
         next(error);
@@ -197,7 +207,7 @@ exports.getPendingEvents = async (req, res, next) => {
                 .skip(pagination.skip).limit(pagination.limit),
             Event.countDocuments(filter),
         ]);
-        res.json({ success: true, data: { events, pagination: paginationMetadata(pagination, total) }, message: 'Pending events retrieved' });
+        res.json({ success: true, data: { events: events.map((event) => serializeEvent(event, req.user)), pagination: paginationMetadata(pagination, total) }, message: 'Pending events retrieved' });
     } catch (error) {
         next(error);
     }

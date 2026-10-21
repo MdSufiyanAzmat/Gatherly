@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
             const { data } = await api.post('/auth/login', { email, password });
             setUser(data);
             localStorage.setItem('userInfo', JSON.stringify(data));
-            localStorage.setItem('token', data.token);
+            localStorage.removeItem('token');
             return data;
         } catch (error) {
             if (error.response?.data?.needsVerification) throw error.response.data;
@@ -42,14 +42,19 @@ export const AuthProvider = ({ children }) => {
             const { data } = await api.post('/auth/verifyOtp', { email, otp });
             setUser(data);
             localStorage.setItem('userInfo', JSON.stringify(data));
-            localStorage.setItem('token', data.token);
+            localStorage.removeItem('token');
             return data;
         } catch (error) {
             throw error.response?.data?.message || 'OTP verification failed';
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            await api.post('/auth/logout');
+        } catch {
+            // Clear local session state even if the server session has expired.
+        }
         setUser(null);
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');

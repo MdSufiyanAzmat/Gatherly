@@ -39,10 +39,11 @@ const asyncHandler = (fn) => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
 const setTokenCookie = (res, token) => {
+    const isProd = process.env.NODE_ENV === 'production';
     res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/',
     });
@@ -189,7 +190,7 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
     const user = await User.findOneAndUpdate(
         { email: { $eq: email } },
         { isVerified: true },
-        { new: true }
+        { returnDocument: 'after' }
     );
 
     if (!user)
@@ -212,6 +213,12 @@ exports.verifyOtp = asyncHandler(async (req, res) => {
 });
 
 exports.logoutUser = asyncHandler(async (req, res) => {
-    res.clearCookie('token', { path: '/' });
+    const isProd = process.env.NODE_ENV === 'production';
+    res.clearCookie('token', {
+        httpOnly: true,
+        secure: isProd,
+        sameSite: isProd ? 'none' : 'lax',
+        path: '/',
+    });
     return res.json({ message: 'Logged out.' });
 });

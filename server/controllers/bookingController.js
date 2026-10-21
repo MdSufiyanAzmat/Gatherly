@@ -13,6 +13,11 @@ const {
 
 const httpError = (statusCode, message) => Object.assign(new Error(message), { statusCode });
 const sameId = (left, right) => left?.toString() === right?.toString();
+const isEventFinished = (event) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(event.date).getTime() < today.getTime();
+};
 const eventPopulate = { path: 'eventId', select: 'title date ticketPrice image' };
 const userPopulate = { path: 'userId', select: 'name email' };
 
@@ -31,6 +36,7 @@ exports.createFreeBooking = async (req, res, next) => {
         const event = await Event.findById(req.params.eventId).populate('createdBy', 'name email');
         if (!event || event.status !== 'approved') throw httpError(404, 'Event not found');
         if (event.registrationLink) throw httpError(400, 'This event uses the organizer registration link.');
+        if (isEventFinished(event)) throw httpError(400, 'This event has finished. Registration is closed.');
         if (event.isPaid) throw httpError(400, 'This is a paid event.');
         if (event.availableSeats <= 0) throw httpError(400, 'Sold out.');
 
@@ -81,6 +87,7 @@ exports.initiatePaidBooking = async (req, res, next) => {
         const eventId = req.params.eventId;
         const candidate = await Event.findById(eventId);
         if (!candidate || candidate.status !== 'approved') throw httpError(404, 'Event not available.');
+        if (isEventFinished(candidate)) throw httpError(400, 'This event has finished. Registration is closed.');
         if (!candidate.isPaid) throw httpError(400, 'This is a free event.');
         if (!candidate.paymentInfo?.phoneNumber && !candidate.paymentInfo?.qrCode?.url) {
             throw httpError(400, 'The organizer has not configured payment details for this event.');

@@ -5,7 +5,11 @@ const request = async (thunkApi, callback) => {
     try {
         return await callback();
     } catch (error) {
-        return thunkApi.rejectWithValue(error.response?.data?.message || 'Unable to complete the event request');
+        const message = error.response?.data?.message
+            || (error.request
+                ? 'Could not reach the events service. Check the API URL and CORS configuration.'
+                : 'Unable to complete the event request');
+        return thunkApi.rejectWithValue(message);
     }
 };
 

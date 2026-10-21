@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
-import GatherlyLogo from './GatherlyLogo';
 
 const Navbar = () => {
     const { user, logout } = useContext(AuthContext);
@@ -26,9 +25,9 @@ const Navbar = () => {
     return (
         <header className="sticky top-0 z-40 bg-dark shadow-lg">
             <nav className="container mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary navigation">
-                <div className="flex min-h-18 items-center justify-between py-3">
-                    <Link to="/" onClick={closeMenu} className="rounded-lg text-primary focus:outline-none focus:ring-2 focus:ring-secondary">
-                        <GatherlyLogo className="text-light" primaryColor="#2196F3" />
+                <div className="flex min-h-18 items-center justify-end py-3">
+                    <Link to="/" onClick={closeMenu} className="mr-auto rounded-lg font-heading text-xl font-extrabold tracking-tight text-light focus:outline-none focus:ring-2 focus:ring-secondary">
+                        Gatherly
                     </Link>
                     <button
                         type="button"
