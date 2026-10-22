@@ -4,25 +4,6 @@
 
 Built with the **MERN stack** (MongoDB, Express, React, Node.js), Eventera delivers a responsive, role-based experience for organizers, attendees, and administrators.
 
----
-
-## 📌 Table of Contents
-
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture Overview](#-architecture-overview)
-- [Screenshots](#-screenshots)
-- [Project Structure](#-project-structure)
-- [API Overview](#-api-overview)
-- [User Roles & Workflows](#-user-roles--workflows)
-- [Deployment Notes](#-deployment-notes)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Contact](#-contact)
-
----
-
 ## ✨ Features
 
 ### 👤 User Features
