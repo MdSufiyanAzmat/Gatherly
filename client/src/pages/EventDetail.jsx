@@ -126,7 +126,7 @@ const EventDetail = () => {
                         <div className="mb-3 flex gap-2"><span className="rounded-full bg-secondary/15 px-3 py-1 text-xs font-bold uppercase text-dark">{event.category}</span>{isCreator && event.status !== 'approved' && <EventStatusBadge status={event.status} />}</div>
                         <h1 className="font-heading text-4xl font-black">{event.title}</h1>
                         <p className="mt-4 max-w-2xl text-lg text-gray-600">{event.description}</p>
-                        <p className="mt-5 text-sm font-semibold">Organized by {event.createdBy?.name || 'Gatherly'}</p>
+                        <p className="mt-5 text-sm font-semibold">Posted by {event.createdBy?.name || 'Gatherly'}</p>
                         {isCreator && event.status === 'rejected' && <p className="mt-4 rounded bg-red-50 p-3 text-red-700">Rejection reason: {event.rejectionReason}</p>}
                         <button type="button" onClick={handleLike} aria-pressed={liked} aria-label={user ? 'Like this event' : 'Sign in to like this event'} className={`mt-6 inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 font-bold transition focus:outline-none focus:ring-4 focus:ring-primary/20 ${liked ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'}`}>
                             <FaHeart aria-hidden="true" /> {likeCount} {likeCount === 1 ? 'like' : 'likes'}

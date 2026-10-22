@@ -46,7 +46,7 @@ const EventsListPage = () => {
                             <p className="text-xs font-bold uppercase tracking-wide text-gray-500">{event.category}</p>
                             <h2 className="mt-2 text-xl font-bold text-gray-900">{event.title}</h2>
                             <p className="mt-3 text-sm text-gray-600">{new Date(event.date).toLocaleDateString()} · {event.location}</p>
-                            <p className="mt-3 text-sm font-medium text-gray-700">Organized by {event.createdBy?.name || 'Gatherly'}</p>
+                            <p className="mt-3 text-sm font-medium text-gray-700">Posted by {event.createdBy?.name || 'Gatherly'}</p>
                             <p className="mt-2 text-sm font-bold">{event.ticketPrice ? `₹${event.ticketPrice}` : 'Free'}</p>
                             {isEventFinished(event.date) && <p className="mt-2 text-sm font-bold text-red-600">Finished</p>}
                             <Link to={`/events/${event._id}`} className="mt-5 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-dark focus:outline-none focus:ring-4 focus:ring-primary/25">View event</Link>
