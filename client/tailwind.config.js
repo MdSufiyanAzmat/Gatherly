@@ -1,5 +1,3 @@
-// tailwind.config.js
-/** @type {import('tailwindcss').Config} */
 export default {
   content: [
     "./index.html",
@@ -7,7 +5,6 @@ export default {
   ],
   theme: {
     extend: {
-      // Colors
       colors: {
         dark: '#0D47A1',
         light: '#E3F2FD',
@@ -43,13 +40,11 @@ export default {
         },
       },
       
-      // Fonts
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         heading: ['Poppins', 'Inter', 'sans-serif'],
       },
       
-      // Animations
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
@@ -78,13 +73,11 @@ export default {
         },
       },
       
-      // Box Shadows
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'hover': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
       },
       
-      // Container
       container: {
         center: true,
         padding: {
@@ -96,7 +89,5 @@ export default {
       },
     },
   },
-  // ⚠️ Note: Plugins might not work in v4 yet
-  // Some plugins like @tailwindcss/forms are still being updated
   plugins: [],
 }

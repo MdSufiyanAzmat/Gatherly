@@ -26,8 +26,6 @@ const allowedOrigins = new Set([
 
 app.use(cors({
     origin(origin, callback) {
-        // Requests without an Origin header (health checks and server-to-server
-        // calls) do not need CORS validation.
         if (!origin || allowedOrigins.has(origin)) return callback(null, true);
         return callback(new Error('Origin is not allowed by CORS'));
     },

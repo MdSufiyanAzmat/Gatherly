@@ -107,10 +107,8 @@ const createEvent = async (req, res, next, { approvedImmediately = false } = {})
     }
 };
 
-/** Creates a user event submission with multipart image/payment data; it remains pending admin approval. */
 exports.submitEvent = (req, res, next) => createEvent(req, res, next);
 
-/** Creates an administrator-owned event and publishes it immediately. */
 exports.submitAdminEvent = (req, res, next) => createEvent(req, res, next, { approvedImmediately: true });
 
 exports.getPublicEvents = async (req, res, next) => {

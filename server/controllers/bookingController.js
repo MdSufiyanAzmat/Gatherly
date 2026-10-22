@@ -30,7 +30,6 @@ const sendBookingConfirmed = (booking) => {
     ));
 };
 
-//creating booking
 exports.createFreeBooking = async (req, res, next) => {
     try {
         const event = await Event.findById(req.params.eventId).populate('createdBy', 'name email');

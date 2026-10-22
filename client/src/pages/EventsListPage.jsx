@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { fetchPublicEvents } from '../store/eventsSlice';
 import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
 import SubscribeSection from '../components/SubscribeSection';
-import Footer from '../components/Footer';
 import Pagination from '../components/Pagination';
 import { isEventFinished } from '../utils/eventDate';
 
@@ -18,8 +17,6 @@ const EventsListPage = () => {
     useEffect(() => {
         const query = search.trim();
         const requestKey = `${page}:${query}`;
-        // React Strict Mode repeats effects in development. Do not send the
-        // same list request again unless the search text or page has changed.
         if (latestRequest.current === requestKey) return undefined;
 
         const timer = setTimeout(() => {
@@ -59,7 +56,6 @@ const EventsListPage = () => {
             </div>
             <Pagination pagination={pagination} onPageChange={setPage} />
             <SubscribeSection />
-            <Footer />
         </section>
     );
 };

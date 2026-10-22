@@ -14,6 +14,7 @@ import MyEventsPage from './pages/MyEventsPage';
 import AdminPendingEventsPage from './pages/AdminPendingEventsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
 import MyBookingsPage from './pages/MyBookingsPage';
+import Footer from './components/Footer';
 import { AdminOnlyRoute, ProtectedRoute, UserOnlyRoute } from './components/RouteGuards';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
                         <Route path="*" element={<h1 className="text-3xl font-bold text-center mt-20">404 - Page Not Found</h1>} />
                     </Routes>
                 </main>
+                <Footer />
             </div>
         </Router>
     );

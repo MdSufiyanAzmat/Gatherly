@@ -48,8 +48,6 @@ const EventDetail = () => {
     };
 
     const registerExternal = async () => {
-        // Open the tab during the click event so browsers do not treat the
-        // organizer link as an unsolicited popup after the API request.
         const registrationWindow = window.open('', '_blank');
         try {
             await api.post(`/events/${event._id}/register`);

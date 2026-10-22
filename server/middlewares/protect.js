@@ -32,8 +32,6 @@ const optionalAuth = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.SECRET_KEY);
         const user = await User.findById(decoded.id).select('-password');
-        // Event details are public. An expired/stale client credential should
-        // not make an otherwise visible event inaccessible.
         if (user) req.user = user;
         next();
     } catch {

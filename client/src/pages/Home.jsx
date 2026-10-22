@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import api from '../utils/axios';
 import { FaCalendarAlt, FaMapMarkerAlt, FaSearch, FaRegClock, FaTicketAlt, FaShieldAlt } from 'react-icons/fa';
 import SubscribeSection from '../components/SubscribeSection';
-import Footer from '../components/Footer';
 import { assetUrl, DEFAULT_EVENT_IMAGE } from '../utils/assets';
 
 const Home = () => {
@@ -14,7 +13,7 @@ const Home = () => {
     useEffect(() => {
         const timeoutId = setTimeout(() => {
             fetchEvents();
-        }, 400); // 400ms debounce
+        }, 400);
         return () => clearTimeout(timeoutId);
     }, [search]);
 
@@ -31,7 +30,6 @@ const Home = () => {
 
     return (
         <div className="flex flex-col min-h-screen">
-            {/* Hero Section */}
             <div className="relative bg-black text-white rounded-3xl overflow-hidden mb-12 shadow-2xl">
                 <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1459749411175-04bf5292ceea?q=80&w=3000&auto=format&fit=crop')] bg-cover bg-center"></div>
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/80 to-transparent"></div>
@@ -57,7 +55,6 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Why Choose Us / Features row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 px-4">
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center hover:-translate-y-1 transition duration-300">
                     <div className="w-16 h-16 bg-gray-900 text-white rounded-2xl flex items-center justify-center text-2xl mb-6 shadow-md shadow-gray-200/50">
@@ -130,7 +127,6 @@ const Home = () => {
             )}
 
             <SubscribeSection />
-            <Footer />
         </div>
     );
 };

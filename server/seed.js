@@ -13,7 +13,6 @@ const seed = async () => {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Connected to MongoDB');
 
-        // ── Clear existing data ──────────────────────────────
         await Promise.all([
             User.deleteMany({}),
             Event.deleteMany({}),
@@ -21,7 +20,6 @@ const seed = async () => {
         ]);
         console.log('🧹 Cleared existing users, events, and bookings');
 
-        // ── Users ────────────────────────────────────────────
         const passwordHash = await bcrypt.hash('password123', 10);
 
         const users = await User.insertMany([
@@ -58,7 +56,6 @@ const seed = async () => {
         const [admin, aarav, priya, rohan] = users;
         console.log(`👥 Seeded ${users.length} users`);
 
-        // ── Events ───────────────────────────────────────────
         const now = Date.now();
         const day = 24 * 60 * 60 * 1000;
 
@@ -150,8 +147,6 @@ const seed = async () => {
         const [techMeetup, musicFest, pitchNight, yogaRetreat, photoWalk] = events;
         console.log(`📅 Seeded ${events.length} events`);
 
-        // ── Bookings ─────────────────────────────────────────
-        // Free event → auto-confirmed
         const bookings = await Booking.insertMany([
             {
                 userId: priya._id,
@@ -171,7 +166,6 @@ const seed = async () => {
                 paymentStatus: 'not_paid',
                 isFreeEvent: true,
             },
-            // Paid event → pending screenshot review
             {
                 userId: rohan._id,
                 eventId: musicFest._id,
@@ -213,7 +207,6 @@ const seed = async () => {
             },
         ]);
 
-        // Keep event.availableSeats consistent for confirmed bookings
         const confirmedCounts = {};
         for (const b of bookings) {
             if (b.status === 'confirmed') {
@@ -232,7 +225,6 @@ const seed = async () => {
 
         console.log(`🎟️  Seeded ${bookings.length} bookings`);
 
-        // ── Summary ─────────────────────────────────────────
         console.log('\n────────────── SEED SUMMARY ──────────────');
         console.log('Login credentials (password for all): password123');
         console.log('  Admin : admin@gatherly.com');

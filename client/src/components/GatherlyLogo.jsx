@@ -1,6 +1,5 @@
 import React from 'react';
 
-/** A compact, scalable mark representing people coming together. */
 const GatherlyLogo = ({
     className = '',
     size = 40,

@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
     const register = async (name, email, password, role, adminRegistrationCode) => {
         try {
             const { data } = await api.post('/auth/register', { name, email, password, role, adminRegistrationCode });
-            return data; // Returns { message, email }
+            return data;
         } catch (error) {
             throw error.response?.data?.message || error.response?.data?.error || 'Registration failed';
         }
@@ -52,9 +52,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             await api.post('/auth/logout');
-        } catch {
-            // Clear local session state even if the server session has expired.
-        }
+        } catch {}
         setUser(null);
         localStorage.removeItem('userInfo');
         localStorage.removeItem('token');

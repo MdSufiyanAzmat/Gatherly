@@ -100,7 +100,6 @@ const AdminDashboard = () => {
                 </button>
             </div>
 
-            {/* Admin Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
                     <div>
@@ -147,7 +146,6 @@ const AdminDashboard = () => {
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Events Section */}
                 <div className="flex flex-col">
                     <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-3">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 text-sm">{events.length}</span>
@@ -175,7 +173,6 @@ const AdminDashboard = () => {
                     </div>
                 </div>
 
-                {/* Bookings Section */}
                 <div className="flex flex-col">
                     <h2 className="text-2xl font-bold mb-6 text-gray-800 flex items-center gap-3">
                         <span className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-700 text-sm font-bold">{bookings.length}</span>
@@ -216,7 +213,6 @@ const AdminDashboard = () => {
                                         </div>
                                         
 
-                                        {/* Action buttons for admin */}
                                         {booking.status === 'pending' && (
                                             <div className="flex flex-wrap gap-2 mt-2">
                                                 <button onClick={() => handleConfirmBooking(booking._id)} className="flex-1 min-w-30 bg-green-50 text-green-700 hover:bg-green-600 hover:text-white border border-green-200 text-xs font-bold py-2.5 px-3 rounded-lg shadow-sm transition">
