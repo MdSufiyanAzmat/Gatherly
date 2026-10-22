@@ -1,6 +1,6 @@
-# 🎉 Eventera
+# 🎉 Gatherly
 
-**Eventera** is a full-stack event discovery and management platform that makes creating, finding, and managing events simple. It supports both free and paid events, a complete admin approval workflow, and a rich user experience with likes, comments, bookings, and email notifications.
+**Gatherly** is a full-stack event discovery and management platform that makes creating, finding, and managing events simple. It supports both free and paid events, a complete admin approval workflow, and a rich user experience with likes, comments, bookings, and email notifications.
 
 Built with the **MERN stack** (MongoDB, Express, React, Node.js), Eventera delivers a responsive, role-based experience for organizers, attendees, and administrators.
 
@@ -42,13 +42,13 @@ Built with the **MERN stack** (MongoDB, Express, React, Node.js), Eventera deliv
 | **Auth** | JWT (JSON Web Tokens), bcrypt |
 | **File Uploads** | Multer (payment proofs) |
 | **Email** | Nodemailer |
-| **Deployment** | Render (backend), [Vercel/Netlify] (frontend) |
+| **Deployment** | Render (backend), Render (frontend) |
 
 ---
 
 ## 🏗️ Architecture Overview
 
-Eventera follows a classic **three-tier client–server architecture**, with a React SPA on the frontend, a stateless Express REST API on the backend, and MongoDB as the persistent data store.
+Gatherly follows a classic **three-tier client–server architecture**, with a React SPA on the frontend, a stateless Express REST API on the backend, and MongoDB as the persistent data store.
 ┌─────────────────────┐ HTTPS / REST ┌──────────────────────┐
 │ │ ─────────────────────────► │ │
 │ React Client │ │ Express Server │
